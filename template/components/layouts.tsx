@@ -7,15 +7,12 @@ import { useSlide } from 'lionizers-slides';
 import { HUES, pad, type Hue, type IconName } from './tokens';
 import { BigIcon, Icon, Notes } from './content';
 import logoOnDark from './assets/logos/logo-on-dark.svg';
-import logoOnLight from './assets/logos/logo-on-light.svg';
 import './theme.css';
 
 /** Props that all layouts accept. */
 export interface FrameProps {
   /** Hue for accent details (table headers, labels). Default: gold. */
   accent?: Hue;
-  /** Light canvas instead of dark. */
-  light?: boolean;
   /** Smaller base font size, for slides with much text. */
   small?: boolean;
   /** No logo and no footer. */
@@ -33,18 +30,17 @@ function Frame({
   variant,
   hue,
   gradient,
-  light,
   small,
   bare,
   children,
 }: Omit<FrameProps, 'accent'> & { variant: string; hue?: Hue | 'secondary'; gradient?: boolean }) {
   const { index, total, deck } = useSlide();
-  const className = ['lz', variant, gradient && 'lz-gradient', light && 'light', small && 'small']
+  const className = ['lz', variant, gradient && 'lz-gradient', small && 'small']
     .filter(Boolean)
     .join(' ');
   return (
     <div className={className} data-hue={hue}>
-      {!bare && <img className="lz-logo" src={light ? logoOnLight : logoOnDark} alt="Lionizers" />}
+      {!bare && <img className="lz-logo" src={logoOnDark} alt="Lionizers" />}
       {children}
       {!bare && (
         <div className="lz-footer">
@@ -73,7 +69,7 @@ function Header({ kicker, title }: HeaderProps) {
   );
 }
 
-const frame = ({ light, small, bare }: FrameProps) => ({ light, small, bare });
+const frame = ({ small, bare }: FrameProps) => ({ small, bare });
 
 /* ------------------------------------------------------------------ */
 
@@ -362,7 +358,7 @@ export function End({ title, children, ...rest }: EndProps) {
   const de = deck.lang === 'de';
   return (
     <Frame variant="end" {...frame(rest)} bare>
-      <img className="lz-end-logo" src={rest.light ? logoOnLight : logoOnDark} alt="Lionizers" />
+      <img className="lz-end-logo" src={logoOnDark} alt="Lionizers" />
       {title && <h1 className="lz-hero">{title}</h1>}
       {children ?? (
         <div className="lz-contact">

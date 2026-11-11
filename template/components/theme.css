@@ -101,7 +101,7 @@
   --color-violet-ink: hsl(291 25% 58%);
 }
 
-/* Colours that follow the slide (dark or light) and the current hue
+/* Colours that follow the slide and the current hue
    (set with the `color` prop of cards, boxes, … or `accent` of a layout). */
 @theme inline {
   --color-canvas: var(--canvas);
@@ -164,12 +164,6 @@
 }
 .lz *, .lz *::before, .lz *::after { box-sizing: border-box; }
 .lz.small { font-size: 22px; }
-.lz.light {
-  --canvas: var(--light);
-  --fg-rgb: 26, 26, 26;
-  --good: hsl(144 22% 36%);
-  --bad: hsl(0 66% 43%);
-}
 
 /* Current hue of a subtree. Default: gold, as on the website. */
 .lz, [data-hue] {

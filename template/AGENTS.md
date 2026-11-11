@@ -76,7 +76,7 @@ JSX rules that matter:
 
 ## Layouts
 
-All layouts accept `light` (light canvas), `small` (less font size for dense slides), `bare` (no logo, no footer).
+All layouts accept `small` (less font size for dense slides) and `bare` (no logo, no footer). All slides are dark.
 Layouts with a title also accept `kicker` (default: chapter name, `false` hides it) and `accent` (hue for table headers and labels).
 
 | Layout | Use for | Main props / children |
@@ -232,7 +232,7 @@ Tailwind has **only the CI colours**. Other colours (e.g. `blue-500`) do not exi
 
 | Class part | Colour |
 | --- | --- |
-| `fg`, `muted`, `faint` | text: full, 70 %, 45 % (works on dark and light slides) |
+| `fg`, `muted`, `faint` | text: full, 70 %, 45 % |
 | `line`, `tint`, `canvas` | borders, card backgrounds, slide background |
 | `good`, `bad` | green and red with a meaning |
 | `primary` | amber. Signal only: the one thing to look at |
@@ -249,7 +249,7 @@ To get information about the current slide (chapter, page number) in a component
 
 The full CI is in the `lionizers-ci` repository. The rules that matter most on slides:
 
-- Dark first. `light` is the exception.
+- All slides are dark. There are no light slides.
 - Barlow for everything that is read. JetBrains Mono only for labels, tags, figures in diagrams. Mono is always uppercase and never used for sentences.
 - Amber (`primary`, `<em>`) is a signal. One per slide.
 - Colours tell things apart (boxes, cards). Red and green only for bad and good.
