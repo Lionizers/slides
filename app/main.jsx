@@ -2,7 +2,8 @@
  * Presentation runtime. Modes (URL query):
  *   (none)       slide view          #3 = slide 3, #3.2 = slide 3 at step 2
  *   ?presenter   current, next, notes, timer
- *   ?print       all slides as pages (used for the PDF). ?print&steps: one page per step
+ *   ?print       all slides as pages (used for the PDF). ?print&steps: one page per step,
+ *                ?print&notes: with the speaker notes in a hidden .print-notes per page (for exports)
  *   ?source      every slide next to its source file. Key S switches between view and source
  */
 import { Component, render } from 'preact';
@@ -416,10 +417,20 @@ function Print({ deck }) {
   return (
     <div class="print">
       {pages.map(({ index, step }) => (
-        <div class="print-page" key={`${deck.slides[index].file}:${step}`} data-slide={index}>
-          <SlideView deck={deck} index={index} step={step} onSteps={(n) => (counted.current[index] = n)} />
-        </div>
+        <PrintPage key={`${deck.slides[index].file}:${step}`} deck={deck} index={index} step={step} onSteps={(n) => (counted.current[index] = n)} />
       ))}
+    </div>
+  );
+}
+
+/** One page of the print view. ?print&notes also renders the speaker notes, hidden (for exports). */
+function PrintPage({ deck, index, step, onSteps }) {
+  const [notesEl, setNotesEl] = useState(null);
+  const withNotes = params.has('notes');
+  return (
+    <div class="print-page" data-slide={index}>
+      <SlideView deck={deck} index={index} step={step} onSteps={onSteps} notesTarget={withNotes ? notesEl : null} />
+      {withNotes && <div class="print-notes" hidden ref={setNotesEl} />}
     </div>
   );
 }
