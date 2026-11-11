@@ -36,7 +36,8 @@ const DOT = 14;
  */
 export function Timeline({ steps }: { steps: Step[] }) {
   return (
-    <div className="grid" style={{ gridTemplateColumns: `repeat(${steps.length}, 1fr)`, columnGap: GAP }}>
+    // data-smartart: the PowerPoint export (slides-pptx --smartart) makes a SmartArt timeline of it.
+    <div className="grid" data-smartart="timeline" style={{ gridTemplateColumns: `repeat(${steps.length}, 1fr)`, columnGap: GAP }}>
       {steps.map((s, i) => (
         <div key={s.label}>
           <div className="mb-3 font-mono text-[16px] font-medium tracking-[0.05em] uppercase text-muted">{s.label}</div>
