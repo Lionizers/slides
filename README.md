@@ -102,7 +102,9 @@ In the deck folder:
 | `npm run check`              | Type-check and render all slides, find content that does not fit                    |
 | `npm run html`               | One HTML file with everything inside. Opens without a server or internet connection |
 | `npm run pdf`                | PDF, one page per slide. Uses the installed Google Chrome                           |
+| `npm run pptx`               | Editable PowerPoint on the Lionizers template (see [PowerPoint](#powerpoint))       |
 | `npm run build`              | Static website in `.lionizers/dist/`, for example for GitHub Pages                  |
+| `npx lionizers-slides template` | Write `Lionizers.potx`, the PowerPoint template in the CI of the deck            |
 | `npx lionizers-slides guide` | Print the guide for coding agents (`AGENTS.md`)                                     |
 
 Options go after `--`:
@@ -111,10 +113,35 @@ Options go after `--`:
 | ----------------- | ------------------------- | ---------------------------------------- |
 | `-p <port>`       | `dev`                     | Port of the dev server (default 4747)    |
 | `--no-open`       | `dev`                     | Do not open the browser                  |
-| `-o <path>`       | `pdf`, `html`, `build`    | Output file or folder                    |
+| `-o <path>`       | `pdf`, `html`, `pptx`, `template`, `build` | Output file or folder   |
 | `--steps`         | `pdf`                     | One page per step instead of per slide   |
+| `--no-smartart`   | `pptx`                    | Processes and timelines as plain shapes  |
 
 For example: `npm run pdf -- --steps -o handout.pdf`.
+
+## PowerPoint
+
+Sometimes a deck must be PowerPoint, for example for a partner. Two commands help:
+
+- **`npm run pptx`** writes an editable `.pptx` of the deck. Each slide gets the matching layout
+  of the template. Kicker, title, text, columns, quote and key figures go into its placeholders.
+  Everything else (cards, diagrams, tables, icons, images) becomes PowerPoint shapes, text boxes,
+  tables and SVG pictures at the same place as in the browser. Processes and timelines become
+  SmartArt, so phases can be added in PowerPoint. `<Step>` becomes a click animation, `morph`
+  the Morph transition, `<Notes>` the speaker notes.
+- **`npx lionizers-slides template`** writes `Lionizers.potx`: slide master, theme colours,
+  fonts, table style and one layout per layout of the slides, for decks made in PowerPoint.
+
+Both use the colours of the deck's `theme.css`. PowerPoint cannot use the variable fonts of the
+slides. Install the static families on every computer that opens the files (all from Google
+Fonts): [Barlow Condensed](https://fonts.google.com/specimen/Barlow+Condensed) (Light, Regular,
+Medium, SemiBold, Bold, ExtraBold), [Barlow](https://fonts.google.com/specimen/Barlow) (SemiBold,
+ExtraBold) and [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) (Medium, Bold).
+
+What differs from the browser: the slide number is "7", not "07 / 24"; the gradients have no
+noise; lines keep the line breaks of the browser (PowerPoint's static Barlow is a little narrower);
+in a SmartArt the last phase of a process has a tip, and highlighted timeline points are not
+filled; phases added in PowerPoint take the font of the line before them.
 
 ## Why not Marp or open-slide?
 
@@ -167,5 +194,16 @@ How it works:
   Tailwind v4 is available with a theme that has only the design colours and fonts.
 - **One HTML file** (`html`): a normal Vite build with all assets inlined as data URLs, then the
   script and the stylesheet go into `index.html`.
+- **PowerPoint** (`src/pptx/`): `template.js` builds master, theme and layouts from `theme.css`.
+  For `pptx`, the print view with notes (`?print&notes`) runs `browser/extract.js`, which reads
+  every slide into a model (layout, placeholder parts, positioned shapes, steps, morph names).
+  `export.js` maps it onto the template, `smartart.js` writes processes and timelines as SmartArt
+  with own layout definitions, Chrome renders the PNG fallbacks of all SVGs (`raster.js`).
+  `tools/pptx/` has helpers to check results: `powerpoint-pdf.sh` lets PowerPoint (Mac) save a
+  file as PDF, `measure-kicker.py` measures the kicker bullet, `render.js` renders with DeckCraft.
+  Measured in PowerPoint and built in: lengths in SmartArt layouts are millimetres for places and
+  points for text margins and font sizes; PowerPoint scales what a SmartArt draws to its frame;
+  it rounds picture bullets to whole points and draws them narrower; it copies the formatting of
+  a line when you press Enter in the SmartArt text pane.
 - **Agent guide**: `init` also puts an `AGENTS.md` (and a `CLAUDE.md` that points to it) into the
   deck. It describes the layouts, components and rules for coding agents that help with the code.

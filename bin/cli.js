@@ -16,6 +16,8 @@ Usage:
   lionizers-slides [dir]              Start the dev server for the deck in dir (default: .)
   lionizers-slides pdf [dir]          Write <deck>.pdf (needs Google Chrome)
   lionizers-slides html [dir]         Write <deck>.html: one file with everything, no server needed
+  lionizers-slides pptx [dir]         Write <deck>.pptx: editable PowerPoint on the Lionizers template (needs Google Chrome)
+  lionizers-slides template [dir]     Write Lionizers.potx: the PowerPoint template in the CI of the deck
   lionizers-slides build [dir]        Write a static site to dir/.lionizers/dist
   lionizers-slides check [dir]        Type-check, then render and find overflowing slides
   lionizers-slides init [dir]         Create a new deck (copies the CI components into it)
@@ -23,8 +25,9 @@ Usage:
 
 Options:
   -p, --port <n>     Port of the dev server (default: 4747)
-  -o, --out <path>   Output file or folder for pdf, html and build
+  -o, --out <path>   Output file or folder for pdf, html, pptx, template and build
       --steps        pdf: one page per step (see <Step>)
+      --no-smartart  pptx: processes and timelines as plain shapes, not SmartArt
       --no-open      Do not open the browser
   -h, --help         Show this help
 `;
@@ -37,11 +40,12 @@ const { values: opts, positionals } = parseArgs({
     open: { type: 'boolean', default: true },
     'no-open': { type: 'boolean' },
     steps: { type: 'boolean' },
+    'no-smartart': { type: 'boolean' },
     help: { type: 'boolean', short: 'h' },
   },
 });
 
-const COMMANDS = ['dev', 'pdf', 'html', 'build', 'check', 'init', 'guide'];
+const COMMANDS = ['dev', 'pdf', 'html', 'pptx', 'template', 'build', 'check', 'init', 'guide'];
 let [command, dir] = positionals;
 if (!COMMANDS.includes(command)) [command, dir] = ['dev', command];
 if (opts.help) {
@@ -99,7 +103,7 @@ async function dev(path = '/') {
  * Renders all slides in the print view of a headless Chrome and calls fn(page).
  * Returns the errors of the page and the slides with overflowing content.
  */
-async function withPrintView(fn) {
+async function withPrintView(fn, query = opts.steps ? '?print&steps' : '?print') {
   const { chromium } = await import('playwright-core');
   const server = await createServer(viteConfig({ server: { port: 0 } }));
   await server.listen();
@@ -116,7 +120,7 @@ async function withPrintView(fn) {
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
     page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
-    await page.goto(server.resolvedUrls.local[0] + (opts.steps ? '?print&steps' : '?print'), { waitUntil: 'networkidle' });
+    await page.goto(server.resolvedUrls.local[0] + query, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => window.__lionizersReady === true, null, { timeout: 30000 });
     const overflow = await page.evaluate(() => window.__lionizersOverflow);
     await fn?.(page);
@@ -144,6 +148,40 @@ async function pdf() {
   reportRender(result);
   const shown = path.relative(process.cwd(), out);
   console.log(`Wrote ${shown.startsWith('..') ? out : shown}`);
+}
+
+/** Editable PowerPoint on the Lionizers template (src/pptx). Notes become PowerPoint notes. */
+async function pptx() {
+  const out = path.resolve(opts.out ?? path.join(deckDir, `${path.basename(deckDir)}.pptx`));
+  const { writeDeck } = await import('../src/pptx/index.js');
+  let count = 0;
+  const result = await withPrintView(async (page) => {
+    count = await writeDeck(page, { componentsDir: componentsDir(deckDir), out, smartart: !opts['no-smartart'] });
+  }, '?print&notes');
+  reportRender(result);
+  const shown = path.relative(process.cwd(), out);
+  console.log(`Wrote ${shown.startsWith('..') ? out : shown} (${count} slides)`);
+}
+
+/** The PowerPoint template, in the CI of the deck's components. */
+async function template() {
+  const out = path.resolve(opts.out ?? 'Lionizers.potx');
+  const { chromium } = await import('playwright-core');
+  const { writeTemplate } = await import('../src/pptx/index.js');
+  let browser;
+  try {
+    browser = await chromium.launch({ channel: 'chrome' });
+  } catch {
+    console.error('Could not start Google Chrome. Install it, or run: npx playwright install chromium');
+    process.exit(1);
+  }
+  try {
+    await writeTemplate(browser, componentsDir(deckDir), out);
+  } finally {
+    await browser.close();
+  }
+  const shown = path.relative(process.cwd(), out);
+  console.log(`Wrote ${shown.startsWith('..') ? out : shown}. Install the fonts before you use it: see README (PowerPoint).`);
 }
 
 async function buildSite() {
@@ -225,13 +263,14 @@ function init() {
       check: 'lionizers-slides check',
       pdf: 'lionizers-slides pdf',
       html: 'lionizers-slides html',
+      pptx: 'lionizers-slides pptx',
       build: 'lionizers-slides build',
     },
     devDependencies: { [pkg.name]: repo },
   };
   fs.writeFileSync(path.join(deckDir, 'package.json'), JSON.stringify(deckPkg, null, 2) + '\n');
   // Written here, not copied: npm leaves .gitignore files out of the package.
-  fs.writeFileSync(path.join(deckDir, '.gitignore'), 'node_modules/\n*.pdf\n.DS_Store\n');
+  fs.writeFileSync(path.join(deckDir, '.gitignore'), 'node_modules/\n*.pdf\n*.pptx\n.DS_Store\n');
   writeTypes(deckDir, scanComponents(componentsDir(deckDir)));
   for (const f of fs.readdirSync(deckDir).sort()) console.log(`  ${f}`);
 
@@ -265,6 +304,8 @@ if (command === 'guide') {
   init();
 } else if (command === 'check') {
   await check();
+} else if (command === 'template') {
+  await template();
 } else {
   if (!hasSlides()) {
     console.error(`No slides in ${deckDir}.\nCreate *.tsx files there, or run: npx ${repo} init`);
@@ -272,6 +313,7 @@ if (command === 'guide') {
   }
   if (command === 'pdf') await pdf();
   else if (command === 'html') await buildHtml();
+  else if (command === 'pptx') await pptx();
   else if (command === 'build') await buildSite();
   else await dev();
 }

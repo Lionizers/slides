@@ -9,6 +9,7 @@ npm run dev                  # dev server with live reload (opens the browser)
 npm run check                # type-check, then render all slides and find overflow – run it after every change
 npm run pdf                  # write <folder>.pdf
 npm run html                 # write <folder>.html: one file with everything, opens without a server
+npm run pptx                 # write <folder>.pptx: editable PowerPoint on the Lionizers template
 npm run build                # static site in .lionizers/dist/
 npx lionizers-slides guide   # print this guide
 ```
