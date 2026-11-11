@@ -19,7 +19,6 @@ Usage:
   lionizers-slides build [dir]        Write a static site to dir/.lionizers/dist
   lionizers-slides check [dir]        Type-check, then render and find overflowing slides
   lionizers-slides init [dir]         Create a new deck (copies the CI components into it)
-  lionizers-slides docs               Show all layouts with their source code
   lionizers-slides guide              Print the authoring guide (for people and LLMs)
 
 Options:
@@ -42,7 +41,7 @@ const { values: opts, positionals } = parseArgs({
   },
 });
 
-const COMMANDS = ['dev', 'pdf', 'html', 'build', 'check', 'init', 'docs', 'guide'];
+const COMMANDS = ['dev', 'pdf', 'html', 'build', 'check', 'init', 'guide'];
 let [command, dir] = positionals;
 if (!COMMANDS.includes(command)) [command, dir] = ['dev', command];
 if (opts.help) {
@@ -55,7 +54,7 @@ const examplesDir = path.join(pkgDir, 'examples');
 const pkg = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8'));
 /** Where the tool comes from. Every push to main is a new version, named by its commit hash. */
 const repo = pkg.repository;
-const deckDir = path.resolve(command === 'docs' ? examplesDir : (dir ?? '.'));
+const deckDir = path.resolve(dir ?? '.');
 
 /**
  * Commit hash of this copy of the tool, or undefined.
@@ -314,5 +313,5 @@ if (command === 'guide') {
   if (command === 'pdf') await pdf();
   else if (command === 'html') await buildHtml();
   else if (command === 'build') await buildSite();
-  else await dev(command === 'docs' ? '/?source' : '/');
+  else await dev();
 }

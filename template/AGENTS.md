@@ -11,12 +11,10 @@ lionizers-slides check    # type-check, then render all slides and find overflow
 lionizers-slides pdf      # write <folder>.pdf
 lionizers-slides html     # write <folder>.html: one file with everything, opens without a server
 lionizers-slides build    # static site in .lionizers/dist/
-lionizers-slides docs     # reference deck: every layout and component next to its source
 lionizers-slides guide    # print this guide
 ```
 
-Keys in the browser: `→` `←` next / previous step or slide · `O` overview · `P` presenter view (notes, next slide, timer) · `F` fullscreen.
-`?source` after the URL shows every slide next to its source file.
+Keys in the browser: `→` `←` next / previous step or slide · `O` overview · `P` presenter view (notes, next slide, timer) · `S` source view (every slide next to its source file) · `F` fullscreen.
 
 ## Files and order
 
@@ -121,7 +119,7 @@ Components:
 | Component | Use for |
 | --- | --- |
 | `<Step>` / `<Steps>` | content that appears click by click, see "Steps and transitions" below |
-| `<Notes>` | speaker notes. Plain text; line breaks are kept, `- ` lines become bullets, a blank line starts a paragraph. Visible in the presenter view (`P`) and in `?source` |
+| `<Notes>` | speaker notes. Plain text; line breaks are kept, `- ` lines become bullets, a blank line starts a paragraph. Visible in the presenter view (`P`) and in the source view (`S`) |
 | `<Grid cols={3}>` / `<Grid ratio={[2, 1]}>` | columns inside any layout (default: one column per child). Put `<Column label>`, cards or anything inside |
 | `<CheckList>` / `<CrossList>` | lists with green checks / red crosses. Children are `<li>` |
 | `<Yes />` / `<No />` | green check / red cross inline, e.g. in table cells |
@@ -263,4 +261,4 @@ The full CI is in the `lionizers-ci` repository. The rules that matter most on s
 1. `lionizers-slides check` reports no errors. It checks the types and renders every slide:
    content that is too close to the edge or beyond it is reported with the slide file.
    Fix it: shorten the text, use `small`, or split the slide.
-2. Look at the slides (`lionizers-slides`, or `?source`), or write the PDF and look at the pages.
+2. Look at the slides (`lionizers-slides`, or the source view `?source`), or write the PDF and look at the pages.

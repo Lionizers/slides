@@ -66,4 +66,13 @@ body.mode-source { height: auto; background: #141414; }
   font-family: "JetBrains Mono", monospace; font-size: 13px; line-height: 1.55; white-space: pre-wrap; color: rgba(245, 245, 240, 0.85);
   max-height: 520px; overflow: auto;
 }
+/* Syntax colours, close to One Dark. Hues from the CI palette (gold, red, olive, violet),
+   lighter than their -ink tokens so that they read well on the dark code background */
+.source-code .hl-component { color: hsl(37 62% 70%); }                      /* gold */
+.source-code .hl-tag { color: hsl(0 58% 67%); }                             /* red */
+.source-code .hl-attr { color: hsl(27 48% 64%); font-style: italic; }       /* gold, warmer */
+.source-code .hl-string { color: hsl(94 30% 63%); }                         /* olive */
+.source-code .hl-number, .source-code .hl-keyword { color: hsl(290 28% 72%); } /* violet */
+.source-code .hl-punct { color: rgba(245, 245, 240, 0.55); }
+.source-code .hl-comment { color: rgba(245, 245, 240, 0.38); font-style: italic; }
 @media (max-width: 900px) { .source section { grid-template-columns: 1fr; } }

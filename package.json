@@ -21,7 +21,6 @@
   },
   "scripts": {
     "dev": "node bin/cli.js examples",
-    "docs": "node bin/cli.js docs",
     "check": "node bin/cli.js check examples",
     "prepare": "node scripts/prepare.js"
   },

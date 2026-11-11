@@ -3,13 +3,14 @@
  *   (none)       slide view          #3 = slide 3, #3.2 = slide 3 at step 2
  *   ?presenter   current, next, notes, timer
  *   ?print       all slides as pages (used for the PDF). ?print&steps: one page per step
- *   ?source      every slide next to its source file (reference and docs)
+ *   ?source      every slide next to its source file. Key S switches between view and source
  */
 import { Component, render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { flushSync } from 'preact/compat';
 import * as deckModule from 'virtual:lionizers-deck';
 import { SlideContext } from './api.js';
+import { highlight } from './highlight.js';
 import './app.css';
 
 const WIDTH = 1280;
@@ -227,6 +228,10 @@ function navKeys(e, nav) {
   else return false;
 }
 
+function openSource(index) {
+  location.assign(`${location.pathname}?source#slide-${index + 1}`);
+}
+
 function openPresenter() {
   window.open(`${location.pathname}?presenter${location.hash}`, 'lionizers-presenter', 'width=1400,height=850');
 }
@@ -251,6 +256,7 @@ function Viewer({ deck }) {
     if (navKeys(e, nav) !== false) return;
     if (e.key === 'o' || e.key === 'Escape') setOverview(true);
     else if (e.key === 'p') openPresenter();
+    else if (e.key === 's') openSource(index);
     else if (e.key === 'f') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
     else if (e.key === '?' || e.key === 'h') setHelp((h) => !h);
     else return false;
@@ -297,6 +303,7 @@ function Help() {
     ['↓ / ↑', 'next / previous slide, without steps'],
     ['O / Esc', 'overview'],
     ['P', 'presenter view (notes, next slide, timer)'],
+    ['S', 'source view: every slide next to its code'],
     ['F', 'fullscreen'],
     ['H / ?', 'this help'],
   ];
@@ -448,12 +455,19 @@ function findOverflow(deck) {
 }
 
 function Source({ deck }) {
+  // S or Esc: back to the slide view, at the first slide that is visible at the top.
+  useKeys((e) => {
+    if (e.key !== 's' && e.key !== 'Escape') return false;
+    const sections = [...document.querySelectorAll('.source section')];
+    const top = sections.findIndex((el) => el.getBoundingClientRect().bottom > 80);
+    location.assign(`${location.pathname}#${Math.max(top, 0) + 1}`);
+  });
   return (
     <div class="source">
       <header>
         <h1>{deck.title}</h1>
         <p>
-          {deck.slides.length} slides. Each slide is shown next to its source file. Press a slide to open it.
+          {deck.slides.length} slides. Each slide is shown next to its source file. Click a slide to open it, or press S to go back.
         </p>
       </header>
       {deck.slides.map((s, i) => (
@@ -465,7 +479,9 @@ function Source({ deck }) {
           </a>
           <div class="source-code">
             <div class="source-file">{s.file}</div>
-            <pre>{s.source}</pre>
+            <pre>
+              {highlight(s.source).map(([cls, text]) => (cls ? <span class={cls}>{text}</span> : text))}
+            </pre>
           </div>
         </section>
       ))}
