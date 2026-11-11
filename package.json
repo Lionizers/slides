@@ -14,7 +14,8 @@
     "template",
     "examples",
     "README.md",
-    ".commit"
+    ".commit",
+    ".archive-commit"
   ],
   "engines": {
     "node": ">=20"

@@ -82,7 +82,7 @@ and copy what you need.
 To type less, install the tool once. To update, run the same command again.
 
 ```sh
-npm install -g github:lionizers/slides
+npm install -g --install-links github:lionizers/slides
 lionizers-slides init my-talk
 ```
 
@@ -147,8 +147,11 @@ npm run check
 ```
 
 There are no version numbers and no tags. Every push to `main` is the new version, named by its
-commit hash. On install, `scripts/prepare.js` writes the hash into `.commit`, because npm does not
-copy the `.git` folder. A push to `main` also publishes the example deck to GitHub Pages
+commit hash. An install has no `.git` folder, so the tool finds its hash in another place: npm
+usually downloads the GitHub tarball, and `git archive` writes the hash into `.archive-commit`
+(see `.gitattributes`). When npm clones the repository instead, `scripts/prepare.js` writes it
+into `.commit`. As a last fallback, the tool reads it from the lockfile of the install.
+A push to `main` also publishes the example deck to GitHub Pages
 (`.github/workflows/pages.yml`).
 
 How it works:

@@ -58,8 +58,10 @@ const deckDir = path.resolve(dir ?? '.');
 
 /**
  * Commit hash of this copy of the tool, or undefined.
- * In a git checkout it comes from git. An install from GitHub has no .git folder:
- * there the `prepare` script wrote the hash into .commit.
+ * In a git checkout it comes from git. An install from GitHub has no .git folder. There, one of
+ * these has it: .commit (written by `prepare` when npm cloned the repository), .archive-commit
+ * (written by `git archive` when npm downloaded the GitHub tarball, see .gitattributes), or the
+ * lockfile of the install.
  */
 function ownCommit() {
   if (fs.existsSync(path.join(pkgDir, '.git'))) {
@@ -70,10 +72,33 @@ function ownCommit() {
     const dirty = run('status', '--porcelain').stdout.trim() !== '';
     return { hash: head.stdout.trim(), dirty };
   }
-  const file = path.join(pkgDir, '.commit');
-  if (!fs.existsSync(file)) return undefined;
-  const hash = fs.readFileSync(file, 'utf8').trim();
-  return /^[0-9a-f]{40}$/.test(hash) ? { hash, dirty: false } : undefined;
+  const isHash = (s) => /^[0-9a-f]{40}$/.test(s ?? '');
+  const read = (name) => {
+    const file = path.join(pkgDir, name);
+    return fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim() : undefined;
+  };
+  const hash = [read('.commit'), read('.archive-commit'), lockfileCommit()].find(isHash);
+  return hash ? { hash, dirty: false } : undefined;
+}
+
+/**
+ * Commit hash from the lockfile of the install. npm often installs from a GitHub tarball
+ * without .git; then `prepare` cannot write .commit. But npm records the resolved commit
+ * in node_modules/.package-lock.json (npx and global installs) or in package-lock.json.
+ */
+function lockfileCommit() {
+  const modulesDir = path.dirname(pkgDir);
+  for (const file of [path.join(modulesDir, '.package-lock.json'), path.join(modulesDir, '..', 'package-lock.json')]) {
+    try {
+      const lock = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const resolved = lock.packages?.[`node_modules/${pkg.name}`]?.resolved ?? '';
+      const hash = resolved.match(/#([0-9a-f]{40})$/)?.[1];
+      if (hash) return hash;
+    } catch {
+      // No lockfile here, try the next one.
+    }
+  }
+  return undefined;
 }
 const commit = ownCommit();
 const short = (hash) => hash.slice(0, 7);
@@ -146,7 +171,7 @@ async function dev(path = '/') {
   const url = server.resolvedUrls.local[0].replace(/\/$/, '') + path;
   console.log(`\n  Deck:    ${deckDir}`);
   console.log(`  Slides:  ${url}`);
-  console.log(`  Keys:    → ← navigate · O overview · P presenter · F fullscreen · H help`);
+  console.log(`  Keys:    → ← navigate · O overview · P presenter · S source · F fullscreen · H help`);
   console.log(builtWithHint());
   if (opts.open && !opts['no-open']) openBrowser(url);
 }

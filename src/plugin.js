@@ -175,6 +175,9 @@ export function transformSlide(code, components) {
  * components, and a tsconfig that the deck's tsconfig.json extends.
  */
 export function writeTypes(deckDir, components) {
+  // A dev server can still get file events after its deck folder was moved or deleted.
+  // Do not create the folder again.
+  if (!fs.existsSync(deckDir)) return;
   const dir = typesDir(deckDir);
   fs.mkdirSync(dir, { recursive: true });
   const rel = (f) => {
@@ -343,6 +346,7 @@ export default function lionizersSlides({ deckDir }) {
       };
       const onFileEvent = (event) => (file) => {
         if (file.startsWith(typesDir(deckDir) + path.sep)) return;
+        if (!fs.existsSync(deckDir)) return; // The deck folder was moved or deleted.
         // A components folder was added or removed, or a component was added or renamed.
         const nextDir = componentsDir(deckDir);
         if (CODE_EXT.test(file) && (file.startsWith(nextDir) || nextDir !== compDir)) {

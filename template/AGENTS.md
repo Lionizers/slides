@@ -3,7 +3,7 @@
 This folder is a presentation. Every `.tsx` file is one slide.
 The tool is `lionizers-slides`. It comes from the GitHub repository `lionizers/slides`, not from the npm registry.
 If the command `lionizers-slides` is not installed, use `npx github:lionizers/slides` in its place
-(or install it once: `npm install -g github:lionizers/slides`).
+(or install it once: `npm install -g --install-links github:lionizers/slides`).
 
 ```sh
 lionizers-slides          # dev server with live reload (opens the browser)
