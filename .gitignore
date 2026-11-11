@@ -1,0 +1,6 @@
+node_modules/
+.lionizers/
+dist/
+*.pdf
+.DS_Store
+.commit

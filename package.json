@@ -1,0 +1,37 @@
+{
+  "name": "lionizers-slides",
+  "version": "0.1.0",
+  "description": "Presentations in the Lionizers CI, written as one TSX file per slide.",
+  "repository": "github:lionizers/slides",
+  "type": "module",
+  "bin": {
+    "lionizers-slides": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "app",
+    "template",
+    "examples",
+    "README.md",
+    ".commit"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node bin/cli.js examples",
+    "docs": "node bin/cli.js docs",
+    "check": "node bin/cli.js check examples",
+    "prepare": "node scripts/prepare.js"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "lucide-preact": "^1.71.0",
+    "playwright-core": "^1.65.0",
+    "preact": "^11.2.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.7"
+  }
+}

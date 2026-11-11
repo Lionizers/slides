@@ -1,0 +1,467 @@
+/* Lionizers CI slide theme. This file belongs to the deck: change it freely.
+   The visual language follows lionizers.com (lionizers-website-capri):
+   Barlow GX with a width axis (condensed by default, normal width for hero
+   titles), JetBrains Mono for the UI layer, 9 hues with 5 roles each, one
+   noise gradient. Native slide size: 1280 × 720.
+
+   Tailwind: utilities work in all slides and components. The theme has ONLY
+   the CI colours and fonts. Default Tailwind colours do not exist. */
+
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@source "../";
+
+@font-face {
+  font-family: "Barlow";
+  src: url("./assets/fonts/BarlowGX.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: block;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("./assets/fonts/JetBrainsMono-wght.woff2") format("woff2");
+  font-weight: 100 800;
+  font-display: block;
+  size-adjust: 92.3%;
+}
+
+@theme {
+  --color-*: initial;
+  --font-*: initial;
+  --shadow-*: initial;
+  --drop-shadow-*: initial;
+  --inset-shadow-*: initial;
+  --text-shadow-*: initial;
+  --radius-*: initial;
+
+  --font-sans: "Barlow", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --radius-xs: 1px;
+  --radius-sm: 3px;
+  --radius-md: 8px;
+
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-dark: #1a1a1a;
+  --color-light: #f5f5f0;
+  --color-primary: #c77a00;     /* amber: signal only */
+  --color-secondary: #365153;   /* teal: atmosphere */
+}
+
+/* 9 hues × 5 roles, from lionizers.com (global.css). Roles, dark → bright:
+   surface-deep · surface · card (card bg, big icons) · button · ink (text).
+   Use them as bg-steel-card, text-green-ink, border-red-card, … */
+@theme static {
+  --color-red-surface-deep: hsl(0 20% 16%);
+  --color-red-surface: hsl(0 47% 22%);
+  --color-red-card: hsl(0 47% 30%);
+  --color-red-button: hsl(0 68% 36%);
+  --color-red-ink: hsl(0 66% 43%);
+  --color-orange-surface-deep: hsl(23 22% 14%);
+  --color-orange-surface: hsl(26 21% 25%);
+  --color-orange-card: hsl(24 20% 32%);
+  --color-orange-button: hsl(19 77% 37%);
+  --color-orange-ink: hsl(23 82% 45%);
+  --color-gold-surface-deep: hsl(27 21% 17%);
+  --color-gold-surface: hsl(27 22% 27%);
+  --color-gold-card: hsl(33 28% 34%);
+  --color-gold-button: hsl(33 75% 37%);
+  --color-gold-ink: hsl(37 100% 39%);
+  --color-olive-surface-deep: hsl(90 8% 20%);
+  --color-olive-surface: hsl(96 10% 28%);
+  --color-olive-card: hsl(93 12% 38%);
+  --color-olive-button: hsl(94 21% 43%);
+  --color-olive-ink: hsl(94 22% 50%);
+  --color-green-surface-deep: hsl(146 16% 17%);
+  --color-green-surface: hsl(144 16% 24%);
+  --color-green-card: hsl(144 15% 32%);
+  --color-green-button: hsl(143 21% 39%);
+  --color-green-ink: hsl(144 22% 46%);
+  --color-teal-surface-deep: hsl(190 20% 16%);
+  --color-teal-surface: hsl(190 21% 21%);
+  --color-teal-card: hsl(190 22% 29%);
+  --color-teal-button: hsl(190 27% 35%);
+  --color-teal-ink: hsl(190 32% 43%);
+  --color-steel-surface-deep: hsl(211 18% 14%);
+  --color-steel-surface: hsl(211 21% 19%);
+  --color-steel-card: hsl(211 19% 28%);
+  --color-steel-button: hsl(211 31% 36%);
+  --color-steel-ink: hsl(211 33% 52%);
+  --color-blue-surface-deep: hsl(235 17% 14%);
+  --color-blue-surface: hsl(235 22% 18%);
+  --color-blue-card: hsl(235 17% 30%);
+  --color-blue-button: hsl(226 21% 36%);
+  --color-blue-ink: hsl(225 28% 54%);
+  --color-violet-surface-deep: hsl(286 15% 17%);
+  --color-violet-surface: hsl(290 20% 21%);
+  --color-violet-card: hsl(288 16% 28%);
+  --color-violet-button: hsl(290 18% 40%);
+  --color-violet-ink: hsl(291 25% 58%);
+}
+
+/* Colours that follow the slide (dark or light) and the current hue
+   (set with the `color` prop of cards, boxes, … or `accent` of a layout). */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-fg: var(--fg);                 /* text */
+  --color-muted: var(--fg-70);           /* secondary text */
+  --color-faint: var(--fg-45);           /* labels, lines */
+  --color-line: var(--fg-10);            /* borders */
+  --color-tint: var(--fg-05);            /* card background */
+  --color-good: var(--good);             /* green: yes, done, advantage */
+  --color-bad: var(--bad);               /* red: no, risk, disadvantage */
+  --color-accent: var(--accent-ink);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-button: var(--accent-button);
+  --color-accent-card: var(--accent-card);
+  --color-accent-surface: var(--accent-surface);
+  --color-accent-surface-deep: var(--accent-surface-deep);
+}
+
+/* ---------- Slide ---------- */
+
+.lz {
+  --dark: #1a1a1a;
+  --light: #f5f5f0;
+  --primary: #c77a00;
+  --secondary: #365153;
+  --canvas: var(--dark);
+  --fg-rgb: 245, 245, 240;
+  --fg: rgb(var(--fg-rgb));
+  --fg-85: rgba(var(--fg-rgb), 0.85);
+  --fg-70: rgba(var(--fg-rgb), 0.70);
+  --fg-45: rgba(var(--fg-rgb), 0.45);
+  --fg-20: rgba(var(--fg-rgb), 0.20);
+  --fg-10: rgba(var(--fg-rgb), 0.10);
+  --fg-05: rgba(var(--fg-rgb), 0.05);
+  --good: var(--color-green-ink);
+  --bad: var(--color-red-ink);
+  --mono: "JetBrains Mono", monospace;
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0.035'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 64px 80px 72px;
+  background: var(--canvas);
+  color: var(--fg);
+  font-family: "Barlow", sans-serif;
+  font-variation-settings: "wdth" 300;
+  font-size: 27px;
+  font-weight: 400;
+  line-height: 1.35;
+  /* Vertical rhythm: only two gaps. --gap-item between list items (all levels),
+     --gap-block between blocks (paragraph, list, table, quote). */
+  --gap-item: 0.6em;
+  --gap-block: 1.5em;
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+}
+.lz *, .lz *::before, .lz *::after { box-sizing: border-box; }
+.lz.small { font-size: 22px; }
+.lz.light {
+  --canvas: var(--light);
+  --fg-rgb: 26, 26, 26;
+  --good: hsl(144 22% 36%);
+  --bad: hsl(0 66% 43%);
+}
+
+/* Current hue of a subtree. Default: gold, as on the website. */
+.lz, [data-hue] {
+  --accent-surface-deep: var(--color-gold-surface-deep);
+  --accent-surface: var(--color-gold-surface);
+  --accent-card: var(--color-gold-card);
+  --accent-button: var(--color-gold-button);
+  --accent-ink: var(--color-gold-ink);
+}
+[data-hue="red"]    { --accent-surface-deep: var(--color-red-surface-deep); --accent-surface: var(--color-red-surface); --accent-card: var(--color-red-card); --accent-button: var(--color-red-button); --accent-ink: var(--color-red-ink); }
+[data-hue="orange"] { --accent-surface-deep: var(--color-orange-surface-deep); --accent-surface: var(--color-orange-surface); --accent-card: var(--color-orange-card); --accent-button: var(--color-orange-button); --accent-ink: var(--color-orange-ink); }
+[data-hue="olive"]  { --accent-surface-deep: var(--color-olive-surface-deep); --accent-surface: var(--color-olive-surface); --accent-card: var(--color-olive-card); --accent-button: var(--color-olive-button); --accent-ink: var(--color-olive-ink); }
+[data-hue="green"]  { --accent-surface-deep: var(--color-green-surface-deep); --accent-surface: var(--color-green-surface); --accent-card: var(--color-green-card); --accent-button: var(--color-green-button); --accent-ink: var(--color-green-ink); }
+[data-hue="teal"]   { --accent-surface-deep: var(--color-teal-surface-deep); --accent-surface: var(--color-teal-surface); --accent-card: var(--color-teal-card); --accent-button: var(--color-teal-button); --accent-ink: var(--color-teal-ink); }
+[data-hue="steel"]  { --accent-surface-deep: var(--color-steel-surface-deep); --accent-surface: var(--color-steel-surface); --accent-card: var(--color-steel-card); --accent-button: var(--color-steel-button); --accent-ink: var(--color-steel-ink); }
+[data-hue="blue"]   { --accent-surface-deep: var(--color-blue-surface-deep); --accent-surface: var(--color-blue-surface); --accent-card: var(--color-blue-card); --accent-button: var(--color-blue-button); --accent-ink: var(--color-blue-ink); }
+[data-hue="violet"] { --accent-surface-deep: var(--color-violet-surface-deep); --accent-surface: var(--color-violet-surface); --accent-card: var(--color-violet-card); --accent-button: var(--color-violet-button); --accent-ink: var(--color-violet-ink); }
+/* The secondary teal of the CI (title, chapter slides). */
+[data-hue="secondary"] { --accent-surface-deep: hsl(185 21% 13%); --accent-surface: var(--secondary); --accent-card: hsl(184 21% 33%); --accent-button: hsl(184 25% 38%); --accent-ink: hsl(184 30% 55%); }
+
+/* The one gradient of the system, with fine noise (from the website hero). */
+.lz-gradient {
+  background-image:
+    var(--noise),
+    linear-gradient(135deg in oklch, var(--accent-surface-deep) 0%, var(--accent-surface) 100%);
+  background-size: 140px 140px, auto;
+}
+
+/* ---------- Chrome: logo, footer ---------- */
+.lz-logo {
+  position: absolute; top: 60px; right: 80px;
+  width: 112px; height: 20px; object-fit: contain; object-position: right center;
+}
+.lz-footer {
+  position: absolute; left: 80px; right: 80px; bottom: 32px;
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--fg-45);
+}
+
+/* ---------- Typography ---------- */
+.lz-kicker {
+  display: flex; align-items: baseline; min-height: 20px;
+  font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--fg-70);
+  margin: 0 0 24px;
+}
+.lz-kicker:empty::before { content: none; }
+.lz-kicker::before { content: ">>"; flex-shrink: 0; font-weight: 700; color: var(--primary); margin-right: 1ch; }
+.lz-title {
+  font-size: 50px; font-weight: 400; line-height: 1.05; letter-spacing: -0.005em;
+  margin: 0 0 32px; max-width: 34ch; color: var(--fg); text-wrap: balance;
+}
+.lz-hero {
+  font-size: 68px; font-weight: 800; line-height: 1; font-variation-settings: "wdth" 500;
+  margin: 0; max-width: 20ch; color: var(--fg); text-wrap: balance;
+}
+.lz-lead { font-size: 28px; line-height: 1.3; color: var(--fg-70); margin: 24px 0 0; max-width: 40ch; }
+.lz-label {
+  font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--accent-ink);
+}
+.lz-number { font-weight: 300; line-height: 1; color: var(--primary); font-variant-numeric: tabular-nums; }
+
+/* ---------- Plain HTML in slide content ---------- */
+.lz-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.lz-body > :last-child, .lz-col > :last-child { margin-bottom: 0; }
+/* <Step> is a wrapper without a box (display: contents). Its last child is the last child of the parent. */
+.lz-step { display: contents; }
+:is(.lz-body, .lz-col, .lz-card) > .lz-step:last-child > :last-child { margin-bottom: 0; }
+.lz p { margin: 0 0 var(--gap-block); max-width: 60ch; color: var(--fg-70); }
+.lz h2, .lz h3 { font-size: 1em; font-weight: 600; line-height: 1.2; margin: 0 0 0.3em; color: var(--fg); }
+.lz * + h2, .lz * + h3 { margin-top: var(--gap-block); }
+/* Bold is only two weight steps above the text around it: a bigger jump
+   closes up the counters of the condensed type. */
+.lz strong, .lz b { color: var(--fg); font-weight: 600; }
+.lz em { font-style: normal; color: var(--primary); font-weight: 500; }
+.lz a { color: var(--primary); text-decoration: none; }
+.lz small { font-size: 0.75em; color: var(--fg-45); }
+.lz img { max-width: 100%; display: block; }
+.lz code { font-family: var(--mono); font-size: 0.8em; background: var(--fg-05); padding: 0.1em 0.35em; border-radius: 3px; color: var(--fg); }
+.lz pre { margin: 0 0 var(--gap-block); background: var(--fg-05); border-radius: 3px; padding: 1em 1.3em; font-size: 0.62em; line-height: 1.5; overflow: hidden; }
+.lz pre code { background: none; padding: 0; font-size: 1em; }
+
+.lz ul, .lz ol { margin: 0 0 var(--gap-block); padding: 0; max-width: 60ch; list-style: none; }
+.lz li { position: relative; margin: 0; color: var(--fg-85); }
+.lz li + li { margin-top: var(--gap-item); }
+.lz ul > li { padding-left: 1.6em; }
+.lz ul > li::before {
+  content: ""; position: absolute; left: 0.1em; top: 0.65em;
+  width: 0.75em; height: 2px; background: var(--primary);
+}
+.lz ol { counter-reset: n; }
+.lz ol > li { padding-left: 2.2em; counter-increment: n; }
+.lz ol > li::before {
+  content: counter(n, decimal-leading-zero);
+  position: absolute; left: 0; top: -0.08em;
+  font-size: 1.3em; font-weight: 300; line-height: 1; color: var(--primary);
+}
+.lz li > ul, .lz li > ol { margin: var(--gap-item) 0 0; }
+.lz li li { color: var(--fg-70); }
+
+.lz blockquote {
+  border-left: 3px solid var(--primary);
+  margin: 0 0 var(--gap-block); padding: 0.15em 0 0.15em 0.9em;
+  font-weight: 500; color: var(--fg); max-width: 48ch;
+}
+.lz blockquote p { color: var(--fg); margin: 0; }
+
+.lz table {
+  border-collapse: separate; border-spacing: 0; width: 100%;
+  background: var(--fg-05); border-radius: 3px; padding: 8px 32px 12px;
+  font-size: 0.82em; margin: 0 0 var(--gap-block);
+}
+.lz table th {
+  font-family: var(--mono); font-size: 16px; font-weight: 500; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--accent-ink);
+  text-align: left; padding: 16px 32px 14px 0; border-bottom: 1px solid var(--fg-20);
+}
+.lz table td { padding: 14px 32px 14px 0; vertical-align: top; color: var(--fg-85); border-bottom: 1px solid var(--fg-10); }
+.lz table tr:last-child td { border-bottom: none; }
+.lz table td:last-child, .lz table th:last-child { padding-right: 0; }
+
+/* ---------- Layout: Content, Columns ---------- */
+.lz-cols { display: grid; gap: 56px; align-items: start; }
+.lz-cols p, .lz-cols ul, .lz-cols ol { max-width: none; }
+.lz-col > .lz-label { margin-bottom: 18px; }
+
+/* ---------- Layout: Title, Section, Feature (gradient slides) ---------- */
+.lz.title, .lz.section, .lz.feature { justify-content: flex-end; padding-bottom: 136px; }
+/* Gap below a hero title: larger than its line gap, so the lead reads as a new block. */
+.lz-hero + .lz-lead { margin-top: 44px; }
+.lz-bigicon {
+  position: absolute; right: 0; bottom: 0; pointer-events: none;
+  color: var(--accent-card); line-height: 0;
+}
+.lz-bigicon svg { width: 520px; height: 520px; translate: 14% 30%; }
+.lz-bigicon.cut-light svg { translate: -6% 4%; }
+:is(.lz.title, .lz.section, .lz.feature) > :not(.lz-logo, .lz-footer, .lz-bigicon) { position: relative; }
+.lz.title .lz-kicker { color: rgba(var(--fg-rgb), 0.8); }
+.lz-client { display: flex; align-items: center; gap: 20px; margin-top: 48px; }
+.lz-client span { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.15em; color: var(--fg-45); }
+.lz-client img { height: 30px; width: auto; max-width: 180px; object-fit: contain; }
+.lz.section .lz-number { font-size: 140px; margin: 0 0 16px -6px; }
+.lz.section .lz-hero { font-size: 64px; }
+.lz.feature .lz-hero { font-size: 56px; max-width: 18ch; }
+.lz.feature .lz-feature-text { margin-top: 24px; max-width: 46ch; color: var(--fg-70); font-size: 26px; }
+.lz.feature .lz-feature-text p { color: inherit; }
+
+/* ---------- Layout: Agenda ---------- */
+.lz-agenda { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-template-rows: repeat(4, auto); gap: 0 56px; }
+.lz .lz-agenda > li { display: flex; align-items: baseline; gap: 24px; padding: 16px 0 !important; margin: 0 !important; border-top: 1px solid var(--fg-10); font-size: 30px; font-weight: 500; color: var(--fg); }
+.lz .lz-agenda > li::before { display: none; }
+.lz-agenda .lz-number { font-size: 44px; width: 1.4em; }
+.lz-agenda li.dim { color: var(--fg-45); }
+
+/* ---------- Layout: Statement, Quote ---------- */
+.lz.statement, .lz.quote { justify-content: center; }
+.lz.statement .lz-kicker, .lz.quote .lz-kicker { position: absolute; top: 64px; left: 80px; }
+.lz-statement {
+  font-size: 54px !important; font-weight: 300 !important; line-height: 1.12; max-width: 24ch !important;
+  margin: 0 !important; padding: 0 0 0 28px !important; border-left: 3px solid var(--primary) !important; color: var(--fg) !important;
+}
+.lz-statement strong, .lz-statement em { font-weight: 500; }
+.lz-quote { margin: 0; max-width: 34ch; }
+.lz-quote p { font-size: 40px; font-style: italic; font-weight: 300; line-height: 1.2; color: var(--fg); margin: 0; max-width: none; }
+.lz-quote p::before { content: "«"; }
+.lz-quote p::after { content: "»"; }
+.lz-quote cite { display: block; margin-top: 28px; font-style: normal; font-size: 22px; color: var(--fg-70); }
+.lz-quote cite strong { display: block; color: var(--fg); font-weight: 600; }
+
+/* ---------- Layout: Media ---------- */
+.lz.media { flex-direction: row; align-items: stretch; padding: 0; }
+.lz.media-right { flex-direction: row-reverse; }
+.lz-media-image { flex: 0 0 46%; display: flex; align-items: center; justify-content: center; }
+/* Icon half: same gradient and icon colour as the chapter slides (.lz-bigicon). */
+.lz-media-image.fit-icon { color: var(--accent-card); }
+.lz.media-left .lz-footer { left: calc(46% + 64px); }
+.lz.media-right .lz-footer { right: calc(46% + 64px); }
+.lz-media-image.fit-icon .lz-icon { width: 300px; height: 300px; }
+.lz-media-image img { width: 100%; height: 100%; }
+.lz-media-image.fit-cover img { object-fit: cover; }
+.lz-media-image.fit-contain { padding: 64px; }
+.lz-media-image.fit-contain img { object-fit: contain; }
+.lz-media-text { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 64px 80px 72px 64px; }
+.lz.media-right .lz-media-text { padding: 64px 64px 72px 80px; }
+
+/* ---------- Layout: End ---------- */
+.lz.end { justify-content: center; }
+/* Logo at the top, title in the middle, contact data at the bottom. */
+.lz-end-logo { position: absolute; left: 80px; top: 64px; width: 220px; height: auto; }
+.lz.end .lz-hero { font-size: 64px; margin-bottom: 0; }
+/* Contact data sits at the bottom of the slide, logo and title stay in the middle. */
+.lz-contact { position: absolute; left: 80px; bottom: 64px; display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 4px 56px; }
+.lz-contact div { font-size: 20px; color: var(--fg-85); }
+.lz-contact .lz-label { font-size: 16px; color: var(--fg-45); margin-bottom: 2px; }
+
+/* ---------- Components ---------- */
+.lz-grid { display: grid; gap: 24px; align-items: stretch; }
+.lz-grid > p, .lz-grid > ul { max-width: none; }
+
+/* Card with colour bar (website AccentCardGrid) */
+.lz-card { background: var(--fg-05); border-left: 3px solid var(--accent-button); border-radius: 3px; padding: 28px 32px 30px; }
+/* Labels that head a block (Card, Stat, Column) are larger than other mono labels. */
+.lz-card .lz-label, .lz-stat .lz-label, .lz-col > .lz-label { font-size: 16px; }
+.lz-card .lz-label { margin-bottom: 14px; }
+.lz-card h3 { font-size: 26px; font-weight: 500; margin: 0 0 10px; }
+.lz-card p, .lz-card li { font-size: 20px; color: var(--fg-70); max-width: none; }
+.lz-card > :last-child { margin-bottom: 0; }
+
+/* Process with chevrons (website ChevronGrid) */
+.lz-process { display: grid; gap: 3px; }
+.lz-phase { background: var(--fg-05); padding: 26px 34px 28px 30px; }
+.lz-phase:first-child { clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%); }
+.lz-phase:not(:first-child):not(:last-child) { clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%, 18px 50%); padding-left: 40px; }
+.lz-phase:last-child:not(:first-child) { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 18px 50%); padding-left: 40px; }
+.lz-phase-label { font-size: 34px; font-weight: 300; line-height: 1; color: var(--accent-ink); margin-bottom: 18px; }
+.lz-phase h3 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+.lz-phase p { font-size: 18px; color: var(--fg-70); margin: 0; }
+
+/* Check and cross lists */
+.lz .lz-checks > li { padding-left: 1.5em; }
+.lz .lz-checks > li::before { display: none; }
+.lz-checks .lz-mark { position: absolute; left: 0; top: 0.18em; width: 1em; height: 1em; }
+.lz-checks.good .lz-mark { color: var(--good); }
+.lz-checks.bad .lz-mark { color: var(--bad); }
+
+/* Key figures: card with colour bar and mono label, like .lz-card (website StatGrid) */
+.lz-stats { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 24px; align-items: stretch; }
+.lz-stat { background: var(--fg-05); border-left: 3px solid var(--accent-button); border-radius: 3px; padding: 28px 32px 30px; }
+.lz-stat .lz-label { margin-bottom: 18px; }
+.lz-stat-value {
+  display: flex; align-items: baseline; gap: 0.08em; white-space: nowrap;
+  font-size: 76px; font-weight: 800; font-variation-settings: "wdth" 500; line-height: 1;
+  font-variant-numeric: tabular-nums; color: var(--fg);
+}
+.lz-stat-unit { font-size: 0.45em; font-weight: 600; color: var(--accent-ink); }
+.lz-stat-text { margin-top: 16px; font-size: 21px; line-height: 1.3; color: var(--fg-70); }
+
+.lz-tag {
+  display: inline-block; font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--fg-85); border: 1px solid var(--fg-20); border-radius: 3px;
+  padding: 5px 8px; margin: 0 6px 6px 0; vertical-align: middle; line-height: 1.2;
+}
+.lz-tag.highlight { color: var(--fg); border-color: var(--accent-ink); }
+.lz-footnote { font-family: var(--mono); font-size: 12px !important; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--fg-45) !important; margin: auto 0 0 !important; padding-top: 20px; }
+.lz-icon { display: inline-block; width: 1em; height: 1em; vertical-align: -0.12em; }
+
+/* ---------- Diagram ---------- */
+.lz-diagram { display: grid; grid-template-columns: 1fr 1fr; gap: 0 72px; align-items: start; } /* gap = LANE_GAP in diagram.tsx */
+.lz-diagram.stretch { align-items: stretch; }
+.lz-diagram + p { margin-top: 24px; }
+.lz-lane { display: flex; flex-direction: column; align-items: center; }
+.lz-lane-title {
+  align-self: flex-start; margin-bottom: 16px;
+  font-family: var(--mono); font-size: 16px; font-weight: 500; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--fg-70);
+}
+.lz-row { display: grid; width: 100%; margin: 0 auto; }
+
+/* Boxes look like the cards: same neutral surface for all, colour only in the bar on the left. */
+.lz-node {
+  width: 100%; background: var(--fg-05); border-left: 3px solid var(--accent-button);
+  border-radius: 3px; padding: 14px 18px 16px;
+}
+.lz-node.accent { background: var(--fg-10); border-left-color: var(--accent-ink); }
+.lz-node.center { text-align: center; }
+.lz-node-name { font-weight: 600; font-size: 21px; color: var(--fg); line-height: 1.15; }
+.lz-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.lz-node.center .lz-tags { justify-content: center; }
+.lz-tags .lz-tag { margin: 0; font-size: 11px; padding: 4px 7px; border-color: var(--fg-20); color: var(--fg-85); }
+.lz-tags .lz-tag.highlight { border-color: var(--accent-ink); color: var(--fg); }
+
+/* Connectors: SVG lines with a dot where they leave a box, rounded corners
+   and an open arrow head where they arrive (see Connector in diagram.tsx). */
+.lz-connector { position: relative; width: 100%; height: 80px; }
+/* Fans and merges need room for a label above and below the turn. */
+.lz-connector.branched { height: 120px; }
+.lz-connector.grow { flex: 1; min-height: 80px; }
+.lz-connector.branched.grow { min-height: 120px; }
+.lz-connector-svg { position: absolute; inset: 0; overflow: visible; }
+.lz-connector-svg path { fill: none; stroke: color-mix(in srgb, var(--fg) 45%, var(--canvas)); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.lz-connector-svg circle { fill: color-mix(in srgb, var(--fg) 45%, var(--canvas)); }
+.lz-connector-label {
+  position: absolute; transform: translate(-50%, -50%);
+  font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.05em; line-height: 1;
+  text-transform: uppercase; white-space: nowrap; color: var(--fg-70);
+  background: var(--canvas); border: 1px solid var(--fg-20); border-radius: 3px; padding: 4px 7px;
+}
+
+/* ---------- Error inside a slide ---------- */
+.lz-error {
+  position: absolute; inset: 40px; padding: 24px; background: #2a1414; border: 1px solid #da291c;
+  font-family: var(--mono); font-size: 14px; color: #f5c0bb; white-space: pre-wrap; overflow: auto;
+}
