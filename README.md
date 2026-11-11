@@ -137,11 +137,13 @@ slides, so both use static cuts of the same fonts (Barlow Condensed, Barlow, Jet
 OFL) and embed the ones they use. The files look right without installed fonts, also in
 PowerPoint for the web.
 
-For people who build decks in PowerPoint from scratch, this repository makes two files to share
-(for example in Teams, or as organization templates in Microsoft 365): `npm run powerpoint`
-writes `dist/Lionizers.potx` (the template) and `dist/Lionizers-Blocks.pptx`, the export of the
-deck in `blocks/`: one slide per building block (process and timeline as SmartArt, cards, key
-figures, table, diagram, icons), with neutral text, to copy into a presentation.
+For people who build decks in PowerPoint from scratch, `npm run powerpoint` in this repository
+writes `dist/Lionizers-Blocks.pptx`: the export of the deck in `blocks/`, one slide per building
+block (process and timeline as SmartArt, cards, key figures, table, diagram, icons) with neutral
+text. It is a normal presentation, so it also works in PowerPoint for the web: save a copy,
+delete what is not needed, duplicate blocks and overwrite their text; "New slide" offers all
+layouts. Ours is in SharePoint under `Shared Documents/Templates`. The command also writes
+`dist/Lionizers.potx`, which only the desktop app can use as a template.
 
 What differs from the browser: the slide number is "7", not "07 / 24"; the gradients have no
 noise; lines keep the line breaks of the browser (PowerPoint's static Barlow is a little narrower);
