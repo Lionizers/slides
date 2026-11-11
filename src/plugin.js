@@ -221,7 +221,7 @@ export function writeTypes(deckDir, components) {
       2,
     ),
   };
-  // Generated files and the build output are not in git. Components and built-with are.
+  // Generated files and the build output are not in git. The components are.
   const ignore = path.join(deckDir, '.lionizers', '.gitignore');
   if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, 'types/\ndist/\n');
   for (const [name, content] of Object.entries(files)) {

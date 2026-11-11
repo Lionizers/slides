@@ -1,2 +1,0 @@
-# GitHub tarballs are made with git archive: it writes the commit hash into this file.
-.archive-commit export-subst

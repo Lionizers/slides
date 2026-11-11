@@ -1,17 +1,19 @@
 # Slides in the Lionizers CI
 
 This folder is a presentation. Every `.tsx` file is one slide.
-The tool is `lionizers-slides`. It comes from the GitHub repository `lionizers/slides`, not from the npm registry.
-Run it with `npx github:lionizers/slides`:
+The tool is `lionizers-slides`, a dev dependency of this folder (from the GitHub repository `lionizers/slides`,
+not from the npm registry). If `node_modules/` is missing, run `npm install` first.
 
 ```sh
-npx github:lionizers/slides          # dev server with live reload (opens the browser)
-npx github:lionizers/slides check    # type-check, then render all slides and find overflow – run it after every change
-npx github:lionizers/slides pdf      # write <folder>.pdf
-npx github:lionizers/slides html     # write <folder>.html: one file with everything, opens without a server
-npx github:lionizers/slides build    # static site in .lionizers/dist/
-npx github:lionizers/slides guide    # print this guide
+npm run dev                  # dev server with live reload (opens the browser)
+npm run check                # type-check, then render all slides and find overflow – run it after every change
+npm run pdf                  # write <folder>.pdf
+npm run html                 # write <folder>.html: one file with everything, opens without a server
+npm run build                # static site in .lionizers/dist/
+npx lionizers-slides guide   # print this guide
 ```
+
+Options go after `--`, e.g. `npm run dev -- --no-open -p 4800` or `npm run pdf -- --steps`.
 
 Keys in the browser: `→` `←` next / previous step or slide · `O` overview · `P` presenter view (notes, next slide, timer) · `S` source view (every slide next to its source file) · `F` fullscreen.
 
@@ -28,7 +30,7 @@ Keys in the browser: `→` `←` next / previous step or slide · `O` overview �
 _deck.tsx                 optional: <Deck title="…" lang="de" transition="fade" />
 img/                      images (any folder name works)
 .lionizers/components/    layouts and components of this deck (your code, change it freely)
-.lionizers/built-with     version (commit) of lionizers-slides this deck last worked with
+package.json              lionizers-slides as a dev dependency (package-lock.json pins its commit) and the npm scripts
 .lionizers/types/         generated type definitions (not in git, do not edit)
 ```
 
@@ -257,7 +259,7 @@ The full CI is in the `lionizers-ci` repository. The rules that matter most on s
 
 ## Checklist after changes
 
-1. `npx github:lionizers/slides check` reports no errors. It checks the types and renders every slide:
+1. `npm run check` reports no errors. It checks the types and renders every slide:
    content that is too close to the edge or beyond it is reported with the slide file.
    Fix it: shorten the text, use `small`, or split the slide.
-2. Look at the slides (`npx github:lionizers/slides`, or the source view `?source`), or write the PDF and look at the pages.
+2. Look at the slides (`npm run dev`, or the source view `?source`), or write the PDF and look at the pages.

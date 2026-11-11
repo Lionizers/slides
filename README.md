@@ -63,6 +63,7 @@ my-talk/
   _deck.tsx               deck settings (title, language)
   img/                    images
   .lionizers/components/  the design: layouts, components, theme, fonts, logos
+  package.json            the tool as a dev dependency, and the npm scripts
 ```
 
 ## Start a deck
@@ -70,10 +71,12 @@ my-talk/
 You need Node.js 20 or newer.
 
 ```sh
-npx github:lionizers/slides init my-talk   # new deck with sample slides
+npx github:lionizers/slides init my-talk   # new deck with sample slides, installs the tool into it
 cd my-talk
-npx github:lionizers/slides                # opens the deck in the browser, reloads on every change
+npm run dev                                # opens the deck in the browser, reloads on every change
 ```
+
+After you clone an existing deck, run `npm install` once.
 
 Press `S` in the browser to see every slide next to its code. To learn the layouts and
 components, look at the [example deck in the source view](https://lionizers.github.io/slides/?source)
@@ -91,19 +94,27 @@ and copy what you need.
 | `F`             | fullscreen                                |
 | `H` `?`         | help                                      |
 
-All commands start with `npx github:lionizers/slides`:
+In the deck folder:
 
-| Command                              | Does                                                                                |
-| ------------------------------------ | ----------------------------------------------------------------------------------- |
-| `… [dir]`                            | Dev server with live reload                                                         |
-| `… init [dir]`                       | New deck with sample slides and the design                                          |
-| `… check [dir]`                      | Type-check and render all slides, find content that does not fit                    |
-| `… html [dir] [-o file]`             | One HTML file with everything inside. Opens without a server or internet connection |
-| `… pdf [dir] [-o file] [--steps]`    | PDF, one page per slide or per step. Uses the installed Google Chrome               |
-| `… build [dir] [-o dir]`             | Static website, for example for GitHub Pages                                        |
-| `… guide`                            | Print the guide for coding agents (`AGENTS.md`)                                     |
+| Command                      | Does                                                                                |
+| ---------------------------- | ----------------------------------------------------------------------------------- |
+| `npm run dev`                | Dev server with live reload                                                         |
+| `npm run check`              | Type-check and render all slides, find content that does not fit                    |
+| `npm run html`               | One HTML file with everything inside. Opens without a server or internet connection |
+| `npm run pdf`                | PDF, one page per slide. Uses the installed Google Chrome                           |
+| `npm run build`              | Static website in `.lionizers/dist/`, for example for GitHub Pages                  |
+| `npx lionizers-slides guide` | Print the guide for coding agents (`AGENTS.md`)                                     |
 
-Options: `-p <port>` (default 4747), `--no-open`.
+Options go after `--`:
+
+| Option            | For                       | Does                                     |
+| ----------------- | ------------------------- | ---------------------------------------- |
+| `-p <port>`       | `dev`                     | Port of the dev server (default 4747)    |
+| `--no-open`       | `dev`                     | Do not open the browser                  |
+| `-o <path>`       | `pdf`, `html`, `build`    | Output file or folder                    |
+| `--steps`         | `pdf`                     | One page per step instead of per slide   |
+
+For example: `npm run pdf -- --steps -o handout.pdf`.
 
 ## Why not Marp or open-slide?
 
@@ -126,10 +137,9 @@ still possible, but only with the colours and fonts of the design.
 From then on, the deck owns them. New design versions only go into new decks. A deck can also
 change or extend its copy: every export of the components folder is available in all slides.
 
-**The tool is not pinned.** A deck always runs with the installed version of the tool, and changes
-to the tool stay compatible. As a fallback, `.lionizers/built-with` records the commit of the tool
-that the deck last worked with. If the installed tool is a different commit, the dev server and a
-failing `check` show the command for the old version: `npx github:lionizers/slides#<commit>`.
+**The tool is pinned.** Each deck installs the tool as a dev dependency, and `package-lock.json`
+records the exact commit. A deck keeps working with the version it was made with, also years later.
+To get the current version, run `npm update lionizers-slides` in the deck, then `npm run check`.
 
 ## Develop this package
 
@@ -140,11 +150,7 @@ npm run check
 ```
 
 There are no version numbers and no tags. Every push to `main` is the new version, named by its
-commit hash. An install has no `.git` folder, so the tool finds its hash in another place: npm
-usually downloads the GitHub tarball, and `git archive` writes the hash into `.archive-commit`
-(see `.gitattributes`). When npm clones the repository instead, `scripts/prepare.js` writes it
-into `.commit`. As a last fallback, the tool reads it from the lockfile of the install.
-A push to `main` also publishes the example deck to GitHub Pages
+commit hash. A push to `main` also publishes the example deck to GitHub Pages
 (`.github/workflows/pages.yml`).
 
 How it works:

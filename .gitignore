@@ -3,4 +3,3 @@ node_modules/
 dist/
 *.pdf
 .DS_Store
-.commit

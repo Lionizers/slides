@@ -50,90 +50,10 @@ if (opts.help) {
 }
 
 const require = createRequire(import.meta.url);
-const examplesDir = path.join(pkgDir, 'examples');
 const pkg = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8'));
 /** Where the tool comes from. Every push to main is a new version, named by its commit hash. */
 const repo = pkg.repository;
 const deckDir = path.resolve(dir ?? '.');
-
-/**
- * Commit hash of this copy of the tool, or undefined.
- * In a git checkout it comes from git. An install from GitHub has no .git folder. There, one of
- * these has it: .commit (written by `prepare` when npm cloned the repository), .archive-commit
- * (written by `git archive` when npm downloaded the GitHub tarball, see .gitattributes), or the
- * lockfile of the install.
- */
-function ownCommit() {
-  if (fs.existsSync(path.join(pkgDir, '.git'))) {
-    const run = (...args) => spawnSync('git', args, { cwd: pkgDir, encoding: 'utf8' });
-    const head = run('rev-parse', 'HEAD');
-    if (head.status !== 0) return undefined;
-    // Uncommitted changes: this version cannot be started again from GitHub.
-    const dirty = run('status', '--porcelain').stdout.trim() !== '';
-    return { hash: head.stdout.trim(), dirty };
-  }
-  const isHash = (s) => /^[0-9a-f]{40}$/.test(s ?? '');
-  const read = (name) => {
-    const file = path.join(pkgDir, name);
-    return fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim() : undefined;
-  };
-  const hash = [read('.commit'), read('.archive-commit'), lockfileCommit()].find(isHash);
-  return hash ? { hash, dirty: false } : undefined;
-}
-
-/**
- * Commit hash from the lockfile of the install. npm often installs from a GitHub tarball
- * without .git; then `prepare` cannot write .commit. But npm records the resolved commit
- * in node_modules/.package-lock.json (npx) or in package-lock.json.
- */
-function lockfileCommit() {
-  const modulesDir = path.dirname(pkgDir);
-  for (const file of [path.join(modulesDir, '.package-lock.json'), path.join(modulesDir, '..', 'package-lock.json')]) {
-    try {
-      const lock = JSON.parse(fs.readFileSync(file, 'utf8'));
-      const resolved = lock.packages?.[`node_modules/${pkg.name}`]?.resolved ?? '';
-      const hash = resolved.match(/#([0-9a-f]{40})$/)?.[1];
-      if (hash) return hash;
-    } catch {
-      // No lockfile here, try the next one.
-    }
-  }
-  return undefined;
-}
-const commit = ownCommit();
-const short = (hash) => hash.slice(0, 7);
-
-/**
- * .lionizers/built-with records the version of the tool that the deck last worked with:
- * "<commit hash> <date>". init writes it, a check without errors updates it.
- * Nothing is enforced: the deck always runs with the installed version. The file only
- * tells how to start the old version when the new one breaks something.
- */
-const builtWithFile = path.join(deckDir, '.lionizers', 'built-with');
-
-function readBuiltWith() {
-  if (!fs.existsSync(builtWithFile)) return undefined;
-  const [hash, date] = fs.readFileSync(builtWithFile, 'utf8').trim().split(/\s+/);
-  return /^[0-9a-f]{7,40}$/.test(hash ?? '') ? { hash, date } : undefined;
-}
-
-function writeBuiltWith() {
-  if (!commit || commit.dirty || deckDir === examplesDir) return;
-  if (readBuiltWith()?.hash === commit.hash) return;
-  fs.mkdirSync(path.dirname(builtWithFile), { recursive: true });
-  fs.writeFileSync(builtWithFile, `${commit.hash} ${new Date().toISOString().slice(0, 10)}\n`);
-}
-
-/** A hint with the command for the old version, if the deck was made with another one. */
-function builtWithHint() {
-  const built = readBuiltWith();
-  if (!built || (commit && commit.hash.startsWith(built.hash) && !commit.dirty)) return '';
-  const now = commit ? short(commit.hash) + (commit.dirty ? ' + local changes' : '') : 'unknown';
-  return (
-    `  Version: this deck last worked with ${short(built.hash)} (${built.date ?? 'no date'}), this is ${now}.\n` +
-    `           If something looks wrong: npx ${repo}#${short(built.hash)} ${process.argv.slice(2).join(' ')}`.trimEnd() + '\n'
-  );
-}
 
 function viteConfig(extra = {}) {
   return {
@@ -171,8 +91,7 @@ async function dev(path = '/') {
   const url = server.resolvedUrls.local[0].replace(/\/$/, '') + path;
   console.log(`\n  Deck:    ${deckDir}`);
   console.log(`  Slides:  ${url}`);
-  console.log(`  Keys:    → ← navigate · O overview · P presenter · S source · F fullscreen · H help`);
-  console.log(builtWithHint());
+  console.log(`  Keys:    → ← navigate · O overview · P presenter · S source · F fullscreen · H help\n`);
   if (opts.open && !opts['no-open']) openBrowser(url);
 }
 
@@ -294,10 +213,36 @@ function init() {
   // The components are the deck's own code, but out of sight in .lionizers/.
   fs.mkdirSync(path.join(deckDir, '.lionizers'), { recursive: true });
   fs.renameSync(path.join(deckDir, 'components'), path.join(deckDir, '.lionizers', 'components'));
-  writeBuiltWith();
+  // The deck installs the tool as a dev dependency: package-lock.json pins the commit,
+  // so the deck keeps working with the version it was made with. `npm update` gets a new one.
+  const name = path.basename(deckDir).toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^[._-]+/, '') || 'slides';
+  const deckPkg = {
+    name,
+    private: true,
+    type: 'module',
+    scripts: {
+      dev: 'lionizers-slides',
+      check: 'lionizers-slides check',
+      pdf: 'lionizers-slides pdf',
+      html: 'lionizers-slides html',
+      build: 'lionizers-slides build',
+    },
+    devDependencies: { [pkg.name]: repo },
+  };
+  fs.writeFileSync(path.join(deckDir, 'package.json'), JSON.stringify(deckPkg, null, 2) + '\n');
+  // Written here, not copied: npm leaves .gitignore files out of the package.
+  fs.writeFileSync(path.join(deckDir, '.gitignore'), 'node_modules/\n*.pdf\n.DS_Store\n');
   writeTypes(deckDir, scanComponents(componentsDir(deckDir)));
   for (const f of fs.readdirSync(deckDir).sort()) console.log(`  ${f}`);
-  console.log(`\nStart it with: npx ${repo} ${path.relative(process.cwd(), deckDir) || '.'}`);
+
+  const rel = path.relative(process.cwd(), deckDir) || '.';
+  console.log('\nInstalling the tool into the deck (npm install) …');
+  const npm = spawnSync('npm', ['install', '--no-fund', '--no-audit'], { cwd: deckDir, stdio: 'inherit', shell: process.platform === 'win32' });
+  if (npm.status !== 0) {
+    console.error(`\nnpm install failed. Run it again in ${rel}, then: npm run dev`);
+    process.exit(1);
+  }
+  console.log(`\nStart it with:\n  cd ${/\s/.test(rel) ? `"${rel}"` : rel}\n  npm run dev`);
 }
 
 async function check() {
@@ -307,20 +252,10 @@ async function check() {
     stdio: 'inherit',
     cwd: deckDir,
   });
-  if (res.status !== 0) {
-    const hint = builtWithHint();
-    if (hint) console.log('\n' + hint);
-    process.exit(res.status ?? 1);
-  }
+  if (res.status !== 0) process.exit(res.status ?? 1);
   console.log('Types: no errors. Rendering the slides …');
   const failed = reportRender(await withPrintView());
-  if (!failed) {
-    console.log('Layout: no errors.');
-    writeBuiltWith();
-  } else {
-    const hint = builtWithHint();
-    if (hint) console.log('\n' + hint);
-  }
+  if (!failed) console.log('Layout: no errors.');
   process.exit(failed ? 1 : 0);
 }
 
