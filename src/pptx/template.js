@@ -10,6 +10,7 @@ import {
 import { FONT, BARLOW_LINE } from './fonts.js';
 import { themeXml } from './theme.js';
 import { Package, RT, coreXml, appXml, presPropsXml, viewPropsXml } from './package.js';
+import { embedFonts } from './embed.js';
 
 /** JetBrains Mono has `size-adjust: 92.3%` in theme.css. */
 const MONO = 0.923;
@@ -541,15 +542,17 @@ export function buildPackage(ci, assets, { kind = 'template', title = 'Lionizers
   pkg.rel(pres, RT.viewProps, 'ppt/viewProps.xml');
   pkg.rel(pres, RT.tableStyles, 'ppt/tableStyles.xml');
 
+  // Fonts last: they are found in all other parts.
+  const fontList = embedFonts(pkg, pres);
   const defaultTextStyle = lstStyle(Array(9).fill({ marL: 0, indent: 0, run: { font: FONT.condensed, size: 24, color: 'tx1' } }), 'p:defaultTextStyle');
   pkg.add(
     pres,
     XML_HEAD +
-      `<p:presentation ${NS} saveSubsetFonts="1">` +
+      `<p:presentation ${NS} embedTrueTypeFonts="1">` +
       `<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="${masterRId}"/></p:sldMasterIdLst>` +
       (notesMasterRId ? `<p:notesMasterIdLst><p:notesMasterId r:id="${notesMasterRId}"/></p:notesMasterIdLst>` : '') +
       (slideIds.length ? `<p:sldIdLst>${slideIds.join('')}</p:sldIdLst>` : '') +
-      `<p:sldSz cx="12192000" cy="6858000"/><p:notesSz cx="6858000" cy="9144000"/>${defaultTextStyle}</p:presentation>`,
+      `<p:sldSz cx="12192000" cy="6858000"/><p:notesSz cx="6858000" cy="9144000"/>${fontList}${defaultTextStyle}</p:presentation>`,
     kind === 'template' ? 'template' : 'presentation',
   );
   return pkg;

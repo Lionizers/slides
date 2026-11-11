@@ -133,10 +133,15 @@ Sometimes a deck must be PowerPoint, for example for a partner. Two commands hel
   fonts, table style and one layout per layout of the slides, for decks made in PowerPoint.
 
 Both use the colours of the deck's `theme.css`. PowerPoint cannot use the variable fonts of the
-slides. Install the static families on every computer that opens the files (all from Google
-Fonts): [Barlow Condensed](https://fonts.google.com/specimen/Barlow+Condensed) (Light, Regular,
-Medium, SemiBold, Bold, ExtraBold), [Barlow](https://fonts.google.com/specimen/Barlow) (SemiBold,
-ExtraBold) and [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) (Medium, Bold).
+slides, so both use static cuts of the same fonts (Barlow Condensed, Barlow, JetBrains Mono, all
+OFL) and embed the ones they use. The files look right without installed fonts, also in
+PowerPoint for the web.
+
+For people who build decks in PowerPoint from scratch, this repository makes two files to share
+(for example in Teams, or as organization templates in Microsoft 365): `npm run powerpoint`
+writes `dist/Lionizers.potx` (the template) and `dist/Lionizers-Blocks.pptx`, the export of the
+deck in `blocks/`: one slide per building block (process and timeline as SmartArt, cards, key
+figures, table, diagram, icons), with neutral text, to copy into a presentation.
 
 What differs from the browser: the slide number is "7", not "07 / 24"; the gradients have no
 noise; lines keep the line breaks of the browser (PowerPoint's static Barlow is a little narrower);
@@ -204,6 +209,7 @@ How it works:
   Measured in PowerPoint and built in: lengths in SmartArt layouts are millimetres for places and
   points for text margins and font sizes; PowerPoint scales what a SmartArt draws to its frame;
   it rounds picture bullets to whole points and draws them narrower; it copies the formatting of
-  a line when you press Enter in the SmartArt text pane.
+  a line when you press Enter in the SmartArt text pane; it takes plain TrueType files as embedded
+  fonts (`embed.js`, fonts in `src/pptx/fonts/`).
 - **Agent guide**: `init` also puts an `AGENTS.md` (and a `CLAUDE.md` that points to it) into the
   deck. It describes the layouts, components and rules for coding agents that help with the code.

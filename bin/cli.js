@@ -181,7 +181,7 @@ async function template() {
     await browser.close();
   }
   const shown = path.relative(process.cwd(), out);
-  console.log(`Wrote ${shown.startsWith('..') ? out : shown}. Install the fonts before you use it: see README (PowerPoint).`);
+  console.log(`Wrote ${shown.startsWith('..') ? out : shown}`);
 }
 
 async function buildSite() {

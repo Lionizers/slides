@@ -20,7 +20,8 @@
   },
   "scripts": {
     "dev": "node bin/cli.js examples",
-    "check": "node bin/cli.js check examples"
+    "check": "node bin/cli.js check examples",
+    "powerpoint": "node bin/cli.js template -o dist/Lionizers.potx && node bin/cli.js pptx blocks -o dist/Lionizers-Blocks.pptx"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",

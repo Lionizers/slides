@@ -79,6 +79,7 @@ export const RT = {
   tableStyles: `${REL}/tableStyles`,
   notesMaster: `${REL}/notesMaster`,
   notesSlide: `${REL}/notesSlide`,
+  font: `${REL}/font`,
 };
 
 const CT = {
@@ -141,6 +142,7 @@ export class Package {
       png: 'image/png',
       svg: 'image/svg+xml',
       jpeg: 'image/jpeg',
+      fntdata: 'application/x-fontdata',
     };
     const types =
       Object.entries(defaults).map(([e, t]) => `<Default Extension="${e}" ContentType="${t}"/>`).join('') +
