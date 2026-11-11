@@ -9,7 +9,9 @@ import { Component, render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { flushSync } from 'preact/compat';
 import * as deckModule from 'virtual:lionizers-deck';
-import { SlideContext } from './api.js';
+// Same specifier as the deck components: a relative import gets another URL when the
+// package is in node_modules (Vite adds ?v=), which loads a second SlideContext.
+import { SlideContext } from 'lionizers-slides';
 import { highlight } from './highlight.js';
 import './app.css';
 
