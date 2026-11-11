@@ -84,7 +84,7 @@ function ownCommit() {
 /**
  * Commit hash from the lockfile of the install. npm often installs from a GitHub tarball
  * without .git; then `prepare` cannot write .commit. But npm records the resolved commit
- * in node_modules/.package-lock.json (npx and global installs) or in package-lock.json.
+ * in node_modules/.package-lock.json (npx) or in package-lock.json.
  */
 function lockfileCommit() {
   const modulesDir = path.dirname(pkgDir);

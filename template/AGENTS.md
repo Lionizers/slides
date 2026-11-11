@@ -2,16 +2,15 @@
 
 This folder is a presentation. Every `.tsx` file is one slide.
 The tool is `lionizers-slides`. It comes from the GitHub repository `lionizers/slides`, not from the npm registry.
-If the command `lionizers-slides` is not installed, use `npx github:lionizers/slides` in its place
-(or install it once: `npm install -g --install-links github:lionizers/slides`).
+Run it with `npx github:lionizers/slides`:
 
 ```sh
-lionizers-slides          # dev server with live reload (opens the browser)
-lionizers-slides check    # type-check, then render all slides and find overflow – run it after every change
-lionizers-slides pdf      # write <folder>.pdf
-lionizers-slides html     # write <folder>.html: one file with everything, opens without a server
-lionizers-slides build    # static site in .lionizers/dist/
-lionizers-slides guide    # print this guide
+npx github:lionizers/slides          # dev server with live reload (opens the browser)
+npx github:lionizers/slides check    # type-check, then render all slides and find overflow – run it after every change
+npx github:lionizers/slides pdf      # write <folder>.pdf
+npx github:lionizers/slides html     # write <folder>.html: one file with everything, opens without a server
+npx github:lionizers/slides build    # static site in .lionizers/dist/
+npx github:lionizers/slides guide    # print this guide
 ```
 
 Keys in the browser: `→` `←` next / previous step or slide · `O` overview · `P` presenter view (notes, next slide, timer) · `S` source view (every slide next to its source file) · `F` fullscreen.
@@ -258,7 +257,7 @@ The full CI is in the `lionizers-ci` repository. The rules that matter most on s
 
 ## Checklist after changes
 
-1. `lionizers-slides check` reports no errors. It checks the types and renders every slide:
+1. `npx github:lionizers/slides check` reports no errors. It checks the types and renders every slide:
    content that is too close to the edge or beyond it is reported with the slide file.
    Fix it: shorten the text, use `small`, or split the slide.
-2. Look at the slides (`lionizers-slides`, or the source view `?source`), or write the PDF and look at the pages.
+2. Look at the slides (`npx github:lionizers/slides`, or the source view `?source`), or write the PDF and look at the pages.

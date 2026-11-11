@@ -79,13 +79,6 @@ Press `S` in the browser to see every slide next to its code. To learn the layou
 components, look at the [example deck in the source view](https://lionizers.github.io/slides/?source)
 and copy what you need.
 
-To type less, install the tool once. To update, run the same command again.
-
-```sh
-npm install -g --install-links github:lionizers/slides
-lionizers-slides init my-talk
-```
-
 ## Present and share
 
 | Key             | Does                                      |
@@ -98,17 +91,17 @@ lionizers-slides init my-talk
 | `F`             | fullscreen                                |
 | `H` `?`         | help                                      |
 
-Without the global install, write `npx github:lionizers/slides` instead of `lionizers-slides`.
+All commands start with `npx github:lionizers/slides`:
 
-| Command                                          | Does                                                                                |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| `lionizers-slides [dir]`                         | Dev server with live reload                                                         |
-| `lionizers-slides init [dir]`                    | New deck with sample slides and the design                                          |
-| `lionizers-slides check [dir]`                   | Type-check and render all slides, find content that does not fit                    |
-| `lionizers-slides html [dir] [-o file]`          | One HTML file with everything inside. Opens without a server or internet connection |
-| `lionizers-slides pdf [dir] [-o file] [--steps]` | PDF, one page per slide or per step. Uses the installed Google Chrome               |
-| `lionizers-slides build [dir] [-o dir]`          | Static website, for example for GitHub Pages                                        |
-| `lionizers-slides guide`                         | Print the guide for coding agents (`AGENTS.md`)                                     |
+| Command                              | Does                                                                                |
+| ------------------------------------ | ----------------------------------------------------------------------------------- |
+| `… [dir]`                            | Dev server with live reload                                                         |
+| `… init [dir]`                       | New deck with sample slides and the design                                          |
+| `… check [dir]`                      | Type-check and render all slides, find content that does not fit                    |
+| `… html [dir] [-o file]`             | One HTML file with everything inside. Opens without a server or internet connection |
+| `… pdf [dir] [-o file] [--steps]`    | PDF, one page per slide or per step. Uses the installed Google Chrome               |
+| `… build [dir] [-o dir]`             | Static website, for example for GitHub Pages                                        |
+| `… guide`                            | Print the guide for coding agents (`AGENTS.md`)                                     |
 
 Options: `-p <port>` (default 4747), `--no-open`.
 
