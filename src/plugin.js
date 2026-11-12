@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { setupRemote } from './remote.js';
 
 export const pkgDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(import.meta.url);
@@ -339,6 +340,11 @@ export default function lionizersSlides({ deckDir }) {
     },
 
     configureServer(server) {
+      setupRemote(server, {
+        port: (server.config.server.port ?? 4747) + 1,
+        deckName: path.basename(deckDir),
+        slideCount: () => scanDeck(deckDir).slides.length,
+      });
       server.watcher.add([deckDir, compDir]);
       const reloadAll = () => {
         for (const env of Object.values(server.environments)) env.moduleGraph.invalidateAll();

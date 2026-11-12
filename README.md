@@ -27,6 +27,8 @@ Press `O` for the overview and `P` for the presenter view.
 - **Ready-made layouts and components** for all common use cases.
 - **Animations and transitions.** Opt in to build-ups and morphs between slides.
 - **Presenter view** with speaker notes and timer, in a second window.
+- **Phone remote.** Scan a QR code in the presenter view, and your phone shows the notes and controls the slides.
+- **Slides for the audience.** Press `A` for a QR code: the audience follows on their phones and gets the PDF at the end.
 - **Overview** of all slides, fullscreen, keyboard navigation.
 - **Live reload.** Every save shows immediately in the browser.
 - **Export** to PDF or one self-contained HTML file.
@@ -90,9 +92,23 @@ and copy what you need.
 | `↓` `↑`         | next / previous slide, without steps      |
 | `O`             | overview of all slides                    |
 | `P`             | presenter view in a second window         |
+| `A`             | QR code for the audience (dev server)     |
 | `S`             | source view: every slide next to its code |
 | `F`             | fullscreen                                |
 | `H` `?`         | help                                      |
+
+In the presenter view, press `Q` for a QR code. Scan it with your phone: the phone shows the current
+and the next slide, the notes and the timer, and has large buttons to go forward and back. The phone
+must be in the same network as the computer, and this works with `npm run dev` only. The code is
+valid for one device and only while it is visible, so nobody else can take over the presentation.
+`Q` also shows how many phones are connected, and disconnects them.
+
+Press `A` (in the slide view or the presenter view) at any time, and a large QR code covers the
+slide. The audience scans it and follows the talk on their phones: the slide fills the screen when
+they turn the phone, pinch zoom shows details, and they can go back to the slides that were shown so
+far. When the last slide was shown, they can open the PDF. They cannot move the slides. The
+slides that come later are only hidden, not protected. Press `A` again to hide the code; the access
+stays open until you close it under `Q`. Like the remote, this works with `npm run dev` only.
 
 In the deck folder:
 

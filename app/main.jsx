@@ -5,6 +5,8 @@
  *   ?print       all slides as pages (used for the PDF). ?print&steps: one page per step,
  *                ?print&notes: with the speaker notes in a hidden .print-notes per page (for exports)
  *   ?source      every slide next to its source file. Key S switches between view and source
+ *   ?remote      phone remote: current slide, notes, next, buttons (dev server only, see src/remote.js)
+ *   ?audience    audience view on a phone: follows the talk, shows the slides shown so far (dev server only)
  */
 import { Component, render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
@@ -14,12 +16,13 @@ import * as deckModule from 'virtual:lionizers-deck';
 // package is in node_modules (Vite adds ?v=), which loads a second SlideContext.
 import { SlideContext } from 'lionizers-slides';
 import { highlight } from './highlight.js';
+import { renderSVG } from 'uqr';
 import './app.css';
 
 const WIDTH = 1280;
 const HEIGHT = 720;
 const params = new URLSearchParams(location.search);
-const mode = ['presenter', 'print', 'source'].find((m) => params.has(m)) ?? 'view';
+const mode = ['presenter', 'print', 'source', 'remote', 'audience'].find((m) => params.has(m)) ?? 'view';
 
 /* ---------- Deck data ---------- */
 
@@ -156,19 +159,61 @@ function posFromHash(deck) {
 
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const hot = import.meta.hot;
+
+/**
+ * Sends and receives positions between windows. The dev server relays them over its
+ * WebSocket, also to phones (see src/remote.js). A static build has no server: there,
+ * a BroadcastChannel connects the windows of one browser.
+ * `follow`: take the last known position when the window opens (the phone remote).
+ */
+function openChannel(deck, onPos, { follow }) {
+  // JSON has no Infinity ("all steps"): it travels as -1.
+  const encode = (p) => ({ index: p.index, step: Number.isFinite(p.step) ? p.step : -1 });
+  const decode = (p) => ({ index: p.index, step: p.step < 0 ? Infinity : p.step });
+  if (hot) {
+    const listener = (data) => onPos(decode(data));
+    hot.on('lionizers:pos', listener);
+    hot.send('lionizers:hello', { follow });
+    return {
+      send: (p) => hot.send('lionizers:pos', encode(p)),
+      // Tells the server where this window is, without moving the others.
+      here: (p) => hot.send('lionizers:here', encode(p)),
+      close: () => hot.off('lionizers:pos', listener),
+    };
+  }
+  const bc = new BroadcastChannel(`lionizers-slides:${deck.name}`);
+  bc.onmessage = (e) => onPos(e.data);
+  return { send: (p) => bc.postMessage(p), here: () => {}, close: () => bc.close() };
+}
+
 /**
  * Current slide and step, kept in sync with the URL hash and with other windows.
  * `animate`: change slides with a view transition (cross-fade and morph).
  * Returns [pos, nav, setSteps]. Call setSteps with the number of steps of the shown slide.
  */
-function usePosition(deck, { animate = false } = {}) {
-  const [pos, setPos] = useState(() => posFromHash(deck));
+function usePosition(deck, { animate = false, follow = false } = {}) {
+  // A phone (follow) takes its position from the talk, not from its URL.
+  const [pos, setPos] = useState(() => (follow ? { index: 0, step: 0 } : posFromHash(deck)));
   const [steps, setStepsState] = useState(0);
   const channel = useRef();
+  const current = useRef(pos);
+  current.current = pos;
+
+  const show = (next) => {
+    const transition = animate && next.index !== current.current.index && deck.transition !== 'none' && document.startViewTransition && !reducedMotion();
+    if (transition) document.startViewTransition(() => flushSync(() => setPos(next)));
+    else setPos(next);
+  };
   useEffect(() => {
-    channel.current = new BroadcastChannel(`lionizers-slides:${deck.name}`);
-    channel.current.onmessage = (e) => setPos(e.data);
-    const onHash = () => setPos(posFromHash(deck));
+    channel.current = openChannel(deck, (p) => show({ index: clamp(p.index, deck), step: p.step }), { follow });
+    if (!follow) channel.current.here(current.current);
+    const onHash = () => {
+      if (follow) return;
+      const p = posFromHash(deck);
+      setPos(p);
+      channel.current.here(p);
+    };
     addEventListener('hashchange', onHash);
     return () => {
       channel.current.close();
@@ -182,10 +227,8 @@ function usePosition(deck, { animate = false } = {}) {
   const go = (index, step = 0) => {
     const next = { index: clamp(index, deck), step };
     if (next.index === pos.index && next.step === pos.step) return;
-    channel.current?.postMessage(next);
-    const transition = animate && next.index !== pos.index && deck.transition !== 'none' && document.startViewTransition && !reducedMotion();
-    if (transition) document.startViewTransition(() => flushSync(() => setPos(next)));
-    else setPos(next);
+    channel.current?.send(next);
+    show(next);
   };
   const nav = {
     next: () => (pos.step < steps ? go(pos.index, pos.step + 1) : go(pos.index + 1, 0)),
@@ -247,6 +290,7 @@ function Viewer({ deck }) {
   const go = (i) => nav.go(i);
   const [overview, setOverview] = useState(false);
   const [help, setHelp] = useState(false);
+  const audienceQr = useAudienceQr();
 
   useKeys((e) => {
     if (overview) {
@@ -259,6 +303,7 @@ function Viewer({ deck }) {
     if (navKeys(e, nav) !== false) return;
     if (e.key === 'o' || e.key === 'Escape') setOverview(true);
     else if (e.key === 'p') openPresenter();
+    else if (e.key === 'a' && hot) toggleAudienceQr(audienceQr);
     else if (e.key === 's') openSource(index);
     else if (e.key === 'f') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
     else if (e.key === '?' || e.key === 'h') setHelp((h) => !h);
@@ -293,6 +338,7 @@ function Viewer({ deck }) {
     <div class="viewer">
       <Stage>
         <SlideView deck={deck} index={index} step={pos.step} onSteps={setSteps} morph />
+        <AudienceQrOverlay qr={audienceQr} />
       </Stage>
       {help && <Help />}
     </div>
@@ -306,6 +352,7 @@ function Help() {
     ['↓ / ↑', 'next / previous slide, without steps'],
     ['O / Esc', 'overview'],
     ['P', 'presenter view (notes, next slide, timer)'],
+    ...(hot ? [['A', 'QR code for the audience: they follow on their phones']] : []),
     ['S', 'source view: every slide next to its code'],
     ['F', 'fullscreen'],
     ['H / ?', 'this help'],
@@ -322,24 +369,128 @@ function Help() {
   );
 }
 
-function Presenter({ deck }) {
-  const [pos, nav, setSteps] = usePosition(deck);
-  const { index, steps } = pos;
-  const step = Math.min(pos.step, steps);
-  const [notesEl, setNotesEl] = useState(null);
+/** Elapsed time since start (mm:ss) and the clock, updated every second. */
+function useTimer() {
   const [start, setStart] = useState(() => Date.now());
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+  const elapsed = Math.floor((now - start) / 1000);
+  return {
+    elapsed: `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`,
+    clock: new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    reset: () => setStart(Date.now()),
+  };
+}
+
+/** What comes next: the next step of this slide, or the next slide before its first step. */
+function NextView({ deck, index, step, steps }) {
+  if (step < steps) return <SlideView deck={deck} index={index} step={step + 1} />;
+  if (index + 1 < deck.slides.length) return <SlideView deck={deck} index={index + 1} step={0} />;
+  return <div class="lz" />;
+}
+
+/** Value of a custom event from the dev server. */
+function useServerEvent(event, initial) {
+  const [value, setValue] = useState(initial);
+  useEffect(() => {
+    if (!hot) return;
+    hot.on(event, setValue);
+    return () => hot.off(event, setValue);
+  }, [event]);
+  return value;
+}
+
+/** Paired phones, and the audience devices (null while the access for the audience is closed). */
+const useRemoteStatus = () => useServerEvent('lionizers:remote', { devices: 0, audience: null });
+
+const remoteApi = (action) => fetch(`/__lionizers/remote/${action}`, { method: 'POST' }).then((r) => r.json());
+
+/** The QR code for the audience, shown over the slides (key A). The server keeps it in sync for all windows. */
+const useAudienceQr = () => useServerEvent('lionizers:audience-qr', { visible: false, url: null });
+const toggleAudienceQr = (qr) => remoteApi(qr.visible ? 'audience/hide' : 'audience/show');
+
+/** Large QR code over the slide, in slide coordinates (1280 × 720). */
+function AudienceQrOverlay({ qr }) {
+  if (!qr.visible || !qr.url) return null;
+  return (
+    <div class="aq">
+      <div class="aq-code" dangerouslySetInnerHTML={{ __html: renderSVG(qr.url, { ecc: 'M', border: 2 }) }} />
+      <div class="aq-text">
+        <div class="aq-label">SLIDES ON YOUR PHONE</div>
+        <div class="aq-title">Scan the code to follow along.</div>
+        <p>Zoom in on details, look back at earlier slides, and get the PDF at the end.</p>
+        <div class="aq-url">{qr.url}</div>
+      </div>
+    </div>
+  );
+}
+
+/** QR code for the phone remote. The code is valid while this dialog is open, for one device. */
+function PairDialog({ status: { devices, audience }, onClose }) {
+  const [state, setState] = useState({});
+  useEffect(() => {
+    remoteApi('pair').then(setState, (e) => setState({ error: e.message }));
+    // The phone used the code: close.
+    const listener = () => onClose();
+    hot.on('lionizers:paired', listener);
+    return () => {
+      hot.off('lionizers:paired', listener);
+      remoteApi('close');
+    };
+  }, []);
+  const qr = state.url && renderSVG(state.url, { ecc: 'M', border: 4 });
+  return (
+    <div class="pair" onClick={onClose}>
+      <div class="pair-box" onClick={(e) => e.stopPropagation()}>
+        <div class="p-caption">REMOTE CONTROL</div>
+        {state.error && <p class="pair-error">{state.error}</p>}
+        {!state.error && <div class="pair-qr" dangerouslySetInnerHTML={qr ? { __html: qr } : undefined} />}
+        {state.url && <div class="pair-url">{state.url}</div>}
+        <p>Scan the code with your phone. It shows the notes and controls the slides.</p>
+        <p class="pair-small">
+          The phone must be in the same network. The code works for one device, and only while it is visible.
+        </p>
+        {audience !== null && (
+          <p class="pair-small">
+            The slides are open for the audience ({audience === 1 ? '1 device' : `${audience} devices`}).{' '}
+            <button class="pair-link" onClick={() => remoteApi('audience/close')}>
+              Close for the audience
+            </button>
+          </p>
+        )}
+        <div class="pair-actions">
+          {devices > 0 && (
+            <button onClick={() => remoteApi('disconnect')}>
+              Disconnect {devices === 1 ? 'the phone' : `${devices} phones`}
+            </button>
+          )}
+          <button onClick={onClose}>Close (Q)</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Presenter({ deck }) {
+  const [pos, nav, setSteps] = usePosition(deck);
+  const { index, steps } = pos;
+  const step = Math.min(pos.step, steps);
+  const [notesEl, setNotesEl] = useState(null);
+  const timer = useTimer();
+  const status = useRemoteStatus();
+  const audienceQr = useAudienceQr();
+  const [pairing, setPairing] = useState(false);
   useKeys((e) => {
+    if (e.key === 'q' && hot) return setPairing((p) => !p);
+    if (e.key === 'a' && hot) return toggleAudienceQr(audienceQr);
+    if (pairing) return e.key === 'Escape' ? setPairing(false) : false;
     if (navKeys(e, nav) !== false) return;
-    if (e.key === 'r') setStart(Date.now());
+    if (e.key === 'r') timer.reset();
     else return false;
   });
-  const elapsed = Math.floor((now - start) / 1000);
-  const mmss = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`;
   const slide = deck.slides[index];
 
   return (
@@ -347,20 +498,14 @@ function Presenter({ deck }) {
       <div class="p-current">
         <Stage>
           <SlideView deck={deck} index={index} step={pos.step} onSteps={setSteps} notesTarget={notesEl} />
+          <AudienceQrOverlay qr={audienceQr} />
         </Stage>
       </div>
       <div class="p-side">
         <div class="p-next">
           <div class="p-caption">NEXT</div>
           <Stage>
-            {/* Next: the next step of this slide, or the next slide before its first step. */}
-            {step < steps ? (
-              <SlideView deck={deck} index={index} step={step + 1} />
-            ) : index + 1 < deck.slides.length ? (
-              <SlideView deck={deck} index={index + 1} step={0} />
-            ) : (
-              <div class="lz" />
-            )}
+            <NextView deck={deck} index={index} step={step} steps={steps} />
           </Stage>
         </div>
         <div class="p-status">
@@ -380,18 +525,235 @@ function Presenter({ deck }) {
           )}
           <div>
             <div class="p-caption">TIME (R = RESET)</div>
-            <div class="p-big">{mmss}</div>
+            <div class="p-big">{timer.elapsed}</div>
           </div>
           <div>
             <div class="p-caption">CLOCK</div>
-            <div class="p-big">{new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+            <div class="p-big">{timer.clock}</div>
           </div>
+          {hot && (
+            <div>
+              <div class="p-caption">PHONE (Q)</div>
+              <button class="p-phone" onClick={() => setPairing(true)}>
+                {status.devices ? `${status.devices} connected` : 'Connect'}
+              </button>
+            </div>
+          )}
+          {hot && (
+            <div>
+              <div class="p-caption">AUDIENCE (A)</div>
+              <button class="p-phone" onClick={() => toggleAudienceQr(audienceQr)}>
+                {audienceQr.visible ? 'Hide QR code' : status.audience !== null ? `${status.audience} following` : 'Show QR code'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <div class="p-notes">
         <div class="p-caption">NOTES · {slide?.file}</div>
         <div ref={setNotesEl} />
       </div>
+      {pairing && <PairDialog status={status} onClose={() => setPairing(false)} />}
+    </div>
+  );
+}
+
+/** Is a phone connected to the dev server? When the presenter disconnects it, the page reloads and shows why. */
+function useOnline() {
+  const [online, setOnline] = useState(true);
+  useEffect(() => {
+    if (!hot) return;
+    const off = () => {
+      setOnline(false);
+      // 403: the presenter disconnected this phone. Reload to show the server's page about it.
+      fetch(location.pathname, { cache: 'no-store' }).then((r) => r.status === 403 && location.reload(), () => {});
+    };
+    const on = () => setOnline(true);
+    hot.on('vite:ws:disconnect', off);
+    hot.on('vite:ws:connect', on);
+    return () => {
+      hot.off('vite:ws:disconnect', off);
+      hot.off('vite:ws:connect', on);
+    };
+  }, []);
+  return online;
+}
+
+/** Phone remote: the presenter view for a small screen, with large buttons. */
+function Remote({ deck }) {
+  const [pos, nav, setSteps] = usePosition(deck, { follow: true });
+  const { index, steps } = pos;
+  const step = Math.min(pos.step, steps);
+  const [notesEl, setNotesEl] = useState(null);
+  const timer = useTimer();
+  const online = useOnline();
+  const slide = deck.slides[index];
+
+  return (
+    <div class="remote">
+      <header class="r-bar">
+        <span>
+          <b>{index + 1}</b> / {deck.slides.length}
+          {steps > 0 && (
+            <span class="r-step">
+              {' '}· step {step}/{steps}
+            </span>
+          )}
+        </span>
+        <button class="r-timer" onClick={timer.reset} title="Reset the timer">
+          {timer.elapsed}
+        </button>
+        <span>{timer.clock}</span>
+      </header>
+      {!online && <div class="r-offline">No connection to the presenter. Trying again …</div>}
+      <div class="r-slides">
+        <div class="r-current">
+          <Stage>
+            <SlideView deck={deck} index={index} step={pos.step} onSteps={setSteps} notesTarget={notesEl} />
+          </Stage>
+        </div>
+        <div class="r-next">
+          <div class="p-caption">NEXT</div>
+          <Stage>
+            <NextView deck={deck} index={index} step={step} steps={steps} />
+          </Stage>
+        </div>
+      </div>
+      <div class="r-notes">
+        <div class="p-caption">NOTES · {slide?.file}</div>
+        <div class="r-notes-body" ref={setNotesEl} />
+      </div>
+      <nav class="r-nav">
+        <button class="r-prev" onClick={nav.prev} aria-label="Previous">
+          ‹
+        </button>
+        <button class="r-go" onClick={nav.next} aria-label="Next">
+          Next ›
+        </button>
+      </nav>
+    </div>
+  );
+}
+
+/**
+ * Audience view on a phone. It follows the talk. The viewer can go back to the slides
+ * that were shown so far, but not forward: the slides that come later are hidden
+ * (only here, they are not protected). At the end, the PDF can be downloaded.
+ * The slide fills the screen (turn the phone for a large view), pinch zoom works, and
+ * the controls appear on a tap, like in a video player.
+ */
+function Audience({ deck }) {
+  const [pos, , setSteps] = usePosition(deck, { animate: true, follow: true });
+  // Highest slide the talk went to (from the server). The PDF is there when it is the last one.
+  const talkReached = useServerEvent('lionizers:reached', { reached: -1 }).reached;
+  const reached = Math.max(talkReached, pos.index);
+  const total = deck.slides.length;
+  // null: follow the talk. A number: the viewer looks at an earlier slide.
+  const [browse, setBrowse] = useState(null);
+  const online = useOnline();
+  const index = browse ?? pos.index;
+  const look = (i) => setBrowse(i >= pos.index ? null : Math.max(0, i));
+  const ended = talkReached >= total - 1;
+  const remaining = total - 1 - reached;
+
+  // Controls: a tap shows them, and they hide after a few seconds. While the viewer looks
+  // at an earlier slide, they stay, so that the way back to the talk is always there.
+  const [controls, setControls] = useState(true);
+  const hideTimer = useRef();
+  const showControls = () => {
+    setControls(true);
+    clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setControls(false), 3000);
+  };
+  useEffect(() => {
+    showControls();
+    return () => clearTimeout(hideTimer.current);
+  }, []);
+  const zoomed = () => (window.visualViewport?.scale ?? 1) > 1.05;
+  // Zoomed in: the controls would be in the way (and zoomed too).
+  useEffect(() => {
+    const onZoom = () => zoomed() && setControls(false);
+    window.visualViewport?.addEventListener('resize', onZoom);
+    return () => window.visualViewport?.removeEventListener('resize', onZoom);
+  }, []);
+  const visible = controls || (browse !== null && !zoomed());
+
+  useKeys((e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') look(index - 1);
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') look(index + 1);
+    else return false;
+  });
+  // Swipe left and right, with one finger and not zoomed in (then the finger moves the view).
+  const touch = useRef(null);
+  const gestures = {
+    onTouchStart: (e) => (touch.current = e.touches.length === 1 && !zoomed() ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null),
+    onTouchEnd: (e) => {
+      const t = touch.current;
+      touch.current = null;
+      if (!t || e.touches.length) return;
+      const dx = e.changedTouches[0].clientX - t.x;
+      const dy = e.changedTouches[0].clientY - t.y;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) look(index + (dx < 0 ? 1 : -1));
+    },
+    // A tap shows the controls, or hides them when they are visible.
+    onClick: () => (controls ? setControls(false) : showControls()),
+  };
+  // Buttons in the controls: do not count as a tap on the slide, and keep the controls visible.
+  const press = (fn) => (e) => {
+    e.stopPropagation();
+    fn();
+    showControls();
+  };
+  const fullscreen = document.fullscreenEnabled;
+
+  return (
+    <div class="audience" {...gestures}>
+      <Stage>
+        {browse === null ? (
+          <SlideView deck={deck} index={index} step={pos.step} onSteps={setSteps} morph />
+        ) : (
+          <SlideView deck={deck} index={index} />
+        )}
+      </Stage>
+      {!online && <div class="a-offline">No connection to the talk. Trying again …</div>}
+      <nav class={`a-bar ${visible ? '' : 'a-hidden'}`}>
+        <button onClick={press(() => look(index - 1))} disabled={index === 0} aria-label="Previous slide">
+          ‹
+        </button>
+        <div class="a-info">
+          <div>
+            {index + 1} / {total}
+          </div>
+          <div class="a-sub">
+            {browse !== null ? (
+              <button class="a-live" onClick={press(() => setBrowse(null))}>
+                Back to the talk
+              </button>
+            ) : ended ? (
+              // Opens in a new tab, not as a download: Chrome warns about downloads over HTTP.
+              <a class="a-live" href="deck.pdf" target="_blank" onClick={(e) => e.stopPropagation()}>
+                Open PDF
+              </a>
+            ) : remaining > 0 ? (
+              `${remaining} more ${remaining === 1 ? 'slide' : 'slides'} to come`
+            ) : (
+              'Last slide'
+            )}
+          </div>
+        </div>
+        <button onClick={press(() => look(index + 1))} disabled={browse === null} aria-label="Next slide">
+          ›
+        </button>
+        {fullscreen && (
+          <button
+            class="a-full"
+            onClick={press(() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()))}
+            aria-label="Fullscreen"
+          >
+            ⛶
+          </button>
+        )}
+      </nav>
     </div>
   );
 }
@@ -504,11 +866,11 @@ function Source({ deck }) {
 
 /* ---------- Mount ---------- */
 
-const MODES = { view: Viewer, presenter: Presenter, print: Print, source: Source };
+const MODES = { view: Viewer, presenter: Presenter, print: Print, source: Source, remote: Remote, audience: Audience };
 
 function mount(mod) {
   const deck = buildDeck(mod);
-  document.title = mode === 'presenter' ? `Presenter · ${deck.title}` : deck.title;
+  document.title = mode === 'presenter' ? `Presenter · ${deck.title}` : mode === 'remote' ? `Remote · ${deck.title}` : deck.title;
   document.documentElement.lang = deck.lang;
   document.body.className = `mode-${mode}`;
   const Mode = MODES[mode];

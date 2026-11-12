@@ -48,6 +48,110 @@ button { font: inherit; color: inherit; }
 .lz-notes ul { margin: 0 0 0.6em; padding-left: 1.2em; }
 .lz-notes li { margin-bottom: 0.4em; }
 
+.p-phone {
+  font-family: "JetBrains Mono", monospace; font-size: 15px; padding: 6px 12px; cursor: pointer;
+  background: none; border: 1px solid rgba(245, 245, 240, 0.3); border-radius: 3px;
+}
+.p-phone:hover { border-color: #c77a00; }
+
+/* Pairing dialog (QR code for the phone remote) */
+.pair { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.7); z-index: 10; }
+.pair-box {
+  width: min(420px, calc(100vw - 32px)); padding: 24px; box-sizing: border-box; background: #181818;
+  border: 1px solid rgba(245, 245, 240, 0.15); border-radius: 4px; font-size: 17px; line-height: 1.4;
+}
+.pair-box p { margin: 0 0 10px; }
+.pair-qr { display: block; width: 100%; aspect-ratio: 1; margin: 8px 0 18px; background: #fff; border-radius: 2px; }
+.pair-qr svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.pair-url { margin: -8px 0 14px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: rgba(245, 245, 240, 0.5); word-break: break-all; -webkit-user-select: all; user-select: all; }
+.pair-small { font-size: 14px; color: rgba(245, 245, 240, 0.6); }
+.pair-error { color: hsl(0 58% 67%); }
+.pair-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 18px; }
+.pair-actions button {
+  padding: 8px 14px; cursor: pointer; background: none; border: 1px solid rgba(245, 245, 240, 0.3); border-radius: 3px; font-size: 15px;
+}
+.pair-actions button:hover { border-color: #c77a00; }
+
+/* Phone remote */
+body.mode-remote { overscroll-behavior: none; }
+.remote {
+  display: flex; flex-direction: column; height: 100dvh; box-sizing: border-box; gap: 12px;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.remote button { touch-action: manipulation; cursor: pointer; }
+.r-bar { display: flex; justify-content: space-between; align-items: center; font-family: "JetBrains Mono", monospace; font-size: 15px; color: rgba(245, 245, 240, 0.7); }
+.r-bar b { color: #f5f5f0; font-size: 20px; font-weight: 500; }
+.r-step { font-size: 13px; }
+.r-timer { background: none; border: 0; padding: 4px 8px; margin: -4px 0; font-family: inherit; font-size: 20px; color: #f5f5f0; }
+.r-offline { padding: 8px 12px; background: hsl(0 45% 30%); border-radius: 3px; font-size: 14px; }
+.r-slides { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; align-items: end; }
+.r-slides .stage { aspect-ratio: 16 / 9; height: auto; }
+.r-next .stage { opacity: 0.8; }
+.r-next .p-caption { margin-bottom: 4px; }
+.r-notes { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid rgba(245, 245, 240, 0.12); padding-top: 10px; }
+.r-notes .lz-notes { font-size: 19px; }
+.r-notes-body:empty::before { content: "No notes for this slide."; color: rgba(245, 245, 240, 0.4); font-size: 16px; }
+.r-nav { display: grid; grid-template-columns: 1fr 2.5fr; gap: 10px; }
+.r-nav button {
+  height: 72px; border: 0; border-radius: 4px; font-size: 22px; font-weight: 600;
+  background: #262626;
+}
+.r-nav .r-go { background: #c77a00; color: #0e0e0e; }
+.r-nav button:active { filter: brightness(1.25); }
+@media (orientation: landscape) and (max-height: 600px) {
+  .remote { display: grid; grid-template-columns: 1.1fr 1fr; grid-template-rows: auto 1fr auto; }
+  .r-bar, .r-offline { grid-column: 1 / -1; }
+  .r-slides { grid-row: 2; grid-column: 1; grid-template-columns: 1fr; align-content: start; }
+  .r-next { display: none; }
+  .r-notes { grid-row: 2 / 4; grid-column: 2; border-top: 0; padding-top: 0; }
+  .r-nav { grid-row: 3; grid-column: 1; }
+  .r-nav button { height: 56px; }
+}
+
+.pair-link { background: none; border: 0; padding: 0; color: #c77a00; cursor: pointer; text-decoration: underline; font-size: inherit; }
+
+/* QR code for the audience over the slides (key A), in slide pixels */
+.aq {
+  position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 64px;
+  padding: 80px; background: rgba(14, 14, 14, 0.97); animation: aq-in 300ms ease;
+}
+@keyframes aq-in { from { opacity: 0; } }
+.aq-code { flex: none; width: 420px; height: 420px; padding: 16px; box-sizing: border-box; background: #fff; border-radius: 6px; }
+.aq-code svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.aq-text { max-width: 520px; font-family: "Barlow", sans-serif; color: #f5f5f0; }
+.aq-label { font-family: "JetBrains Mono", monospace; font-size: 14px; letter-spacing: 0.08em; color: #c77a00; margin-bottom: 16px; }
+.aq-title { font-size: 60px; line-height: 1.05; font-weight: 700; margin-bottom: 24px; }
+.aq-text p { font-size: 24px; line-height: 1.4; margin: 0 0 32px; color: rgba(245, 245, 240, 0.75); }
+.aq-url { font-family: "JetBrains Mono", monospace; font-size: 16px; color: rgba(245, 245, 240, 0.5); }
+
+/* Audience view on a phone: the slide fills the screen, the controls float over it */
+body.mode-audience { overscroll-behavior: none; background: #000; }
+.audience { position: relative; height: 100dvh; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+.a-offline {
+  position: absolute; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; padding: 8px 12px;
+  background: hsl(0 45% 30%); border-radius: 3px; font-size: 14px; text-align: center;
+}
+.a-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px;
+  padding: 24px max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85) 45%);
+  transition: opacity 250ms ease;
+}
+.a-bar.a-hidden { opacity: 0; pointer-events: none; }
+.a-bar > button {
+  flex: none; width: 56px; height: 48px; border: 0; border-radius: 4px; background: rgba(38, 38, 38, 0.9);
+  font-size: 24px; cursor: pointer; touch-action: manipulation;
+}
+.a-bar > button:disabled { opacity: 0.3; cursor: default; }
+.a-bar .a-full { width: 48px; font-size: 20px; }
+.a-info { flex: 1; text-align: center; font-family: "JetBrains Mono", monospace; font-size: 15px; }
+.a-sub { margin-top: 2px; font-size: 12px; color: rgba(245, 245, 240, 0.6); }
+.a-live {
+  display: inline-block; margin-top: 2px; padding: 4px 10px; border: 0; border-radius: 3px; background: #c77a00; color: #0e0e0e;
+  font-family: "JetBrains Mono", monospace; font-size: 12px; text-decoration: none; cursor: pointer;
+}
+
 /* Print / PDF */
 @page { size: 1280px 720px; margin: 0; }
 body.mode-print { background: #1a1a1a; height: auto; }
